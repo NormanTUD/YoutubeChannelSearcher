@@ -6,6 +6,7 @@ use Term::ANSIColor;
 use File::Path qw(make_path);
 use Data::Dumper;
 use autodie;
+use Digest::MD5 qw/md5_hex/;
 use Smart::Comments;
 
 my %options = (
@@ -71,7 +72,7 @@ sub download_data {
 		push @ids, $start;
 	}
 
-	foreach my $id (sort { $a cmp $b } @ids) { ### Working===[%]     done
+	foreach my $id (sort { rand() <=> rand() } @ids) { ### Working===[%]     done
 		warn "\n"; # for smart comments
 		debug "Getting data for id $id";
 		my $unavailable = "$options{path}/unavailable";
@@ -95,10 +96,10 @@ sub download_data {
 				print $fh $contents;
 				close $fh;
 
-				my $contents_edited = read_and_parse_file($results_id, $id);
+				my $contents_edited = read_and_parse_file($downloaded_filename, $id);
 				write_file($results_id, $contents_edited);
 			} else {
-				mywarn "$id did not get downloaded correctly";
+				mywarn "$downloaded_filename did not get downloaded correctly";
 			}
 		}
 
@@ -164,22 +165,33 @@ sub transcribe {
 	my $command = qq#youtube-dl --sub-lang=$options{lang} --write-auto-sub --skip-download -o "$dl/$dlid" -- "$dlid"#;
 	mysystem($command);
 
-	if(!-e "$dl/$id.de.vtt") {
+	if(!-e "$dl/$id.$options{lang}.vtt") {
 		open my $fh, '>>', "$options{path}/unavailable" or die $!;
 		print $fh "$id\n";
 		close $fh;
 	}
-	return "$dl/$id.de.vtt";
+	return "$dl/$id.$options{lang}.vtt";
 }
 
 sub dl_playlist {
 	my $start = shift;
 	debug "dl_playlist($start)";
+	my $hash = $options{path}.'/'.md5_hex($start);
+	my @list = ();
 
-	my $command = qq#youtube-dl -j --flat-playlist "$start" | jq -r '.id'#;
-	debug $command;
-	my @list = qx($command);
-	@list = map { chomp $_; $_ } @list;
+	if(-e $hash) {
+		@list = map { chomp $_; $_; } qx(cat $hash);
+	} else {
+		my $command = qq#youtube-dl -j --flat-playlist "$start" | jq -r '.id'#;
+		debug $command;
+		@list = qx($command);
+		@list = map { chomp $_; $_ } @list;
+		open my $fh, '>>', $hash;
+		foreach (@list) {
+			print $fh "$_\n";
+		}
+		close $fh;
+	}
 
 	warn "got ".Dumper(@list);
 
