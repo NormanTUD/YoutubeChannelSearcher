@@ -96,7 +96,8 @@ sub download_data {
 				print $fh $contents;
 				close $fh;
 
-				my $contents_edited = read_and_parse_file($downloaded_filename, $id);
+				#my $contents_edited = read_and_parse_file($downloaded_filename, $id);
+				my $contents_edited = read_and_parse_file($results_id, $id);
 				write_file($results_id, $contents_edited);
 			} else {
 				mywarn "$downloaded_filename did not get downloaded correctly";
@@ -165,12 +166,14 @@ sub transcribe {
 	my $command = qq#youtube-dl --sub-lang=$options{lang} --write-auto-sub --skip-download -o "$dl/$dlid" -- "$dlid"#;
 	mysystem($command);
 
-	if(!-e "$dl/$id.$options{lang}.vtt") {
+	my $vtt_file = "$dl/$id.$options{lang}.vtt";
+
+	if(!-e $vtt_file) {
 		open my $fh, '>>', "$options{path}/unavailable" or die $!;
 		print $fh "$id\n";
 		close $fh;
 	}
-	return "$dl/$id.$options{lang}.vtt";
+	return $vtt_file;
 }
 
 sub dl_playlist {
@@ -353,7 +356,7 @@ sub read_and_parse_file {
 	my $id = shift;
 	debug "read_and_parse_file($file, $id)";
 
-	my $contents = '';
+	my $contents = "[00:00 -> https://www.youtube.com/watch?v=$id&t=0] ";
 
 	open my $fh, '<', $file or die $!;
 	while (my $line = <$fh>) {
