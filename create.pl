@@ -165,17 +165,17 @@ sub download_data {
 
 		if(-e $comments_file && -e $comments_file) {
 			my @possible_timestamps = ();
-			my @lines = split(/\R/, read_file($comments_file));
+			my @lines = split(/[\n\r]/, read_file($comments_file));
 			foreach my $line (@lines) {
 				eval {
 					my $data_struct = parse_json($line);
 					if(exists $data_struct->{text}) {
 						my $text = $data_struct->{text};
-						if($text =~ m#((\R(?:\d{1,2}:)?\d{1,2}:\d{2}\b.*[a-z]{3,}.*){1,})#gism) {
+						if($text =~ m#((\R\s*(?:\d{1,2}:)?\d{1,2}:\d{2}\b.*[a-z]{3,}.*){1,})#gism) {
 							my $text = $1;
 							my $votes = $data_struct->{votes};
 							my $number_of_timestamps = 0;
-							while ($text =~ m#\R(\b(?:\d{1,2}:)?\d{1,2}:\d{2}\b)#gism) {
+							while ($text =~ m#\R\s*(\b(?:\d{1,2}:)?\d{1,2}:\d{2}\b)#gism) {
 								warn $1;
 								$number_of_timestamps++;
 							}
@@ -186,14 +186,15 @@ sub download_data {
 					}
 				}; 
 				if($@) {
-					print $@;
+					print $line;
+					die $@;
 				}
 			}
 			if(@possible_timestamps) {
 				my @rated_timestamps = sort {
 					$a->{number_of_timestamps} <=> $b->{number_of_timestamps} || 
 					$a->{votes} <=> $b->{votes} ||
-					length($a->{text}) <=> length($b->{text})
+					length($b->{text}) <=> length($a->{text})
 				} @possible_timestamps;
 				die Dumper @rated_timestamps;
 			}
