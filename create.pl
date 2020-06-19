@@ -8,13 +8,15 @@ use Data::Dumper;
 use autodie;
 use Digest::MD5 qw/md5_hex/;
 use Smart::Comments;
+use JSON::Parse 'parse_json';
 
 my %options = (
 	debug => 0,
 	parameter => undef,
 	path => undef,
 	name => undef,
-	lang => 'de'
+	lang => 'de',
+	random => 0
 );
 
 analyze_args(@ARGV);
@@ -59,11 +61,13 @@ sub download_data {
 	my $durations = "$options{path}/durations";
 	my $desc = "$options{path}/desc";
 	my $titles = "$options{path}/titles";
+	my $comments = "$options{path}/comments";
+
 	make_path($results);
 	make_path($dl);
 	make_path($durations);
 	make_path($desc);
-	make_path($titles);
+	make_path($comments);
 
 	my @ids = ();
 	if($start =~ m#list#) {
@@ -72,7 +76,18 @@ sub download_data {
 		push @ids, $start;
 	}
 
-	foreach my $id (sort { rand() <=> rand() } @ids) { ### Working===[%]     done
+	while (my $filename = <$results/*.txt>) {
+		if($filename =~ m#/([a-zA-Z0-9]+)\.txt#) {
+			my $id = $1;
+			push @ids, $id;
+		}
+	}
+	@ids = uniq(@ids);
+	if($options{random}) {
+		@ids = sort { rand() <=> rand() } @ids;
+	}
+
+	foreach my $id (@ids) { ### Working===[%]     done
 		warn "\n"; # for smart comments
 		debug "Getting data for id $id";
 		my $unavailable = "$options{path}/unavailable";
@@ -80,6 +95,8 @@ sub download_data {
 		my $duration_file = "$durations/".$id."_TITLE.txt";
 		my $desc_file = "$desc/".$id."_TITLE.txt";
 		my $title_file = "$titles/".$id."_TITLE.txt";
+		my $comments_file = "$comments/".$id.".json";
+		my $comments_timestamp_file = "$comments/".$id."_parsed.json";
 
 		if(file_contains($unavailable, $id)) {
 			mywarn "$id is listed in `$unavailable`, skipping it";
@@ -87,7 +104,7 @@ sub download_data {
 		}
 
 		if (-f $results_id) {
-			mywarn "$id already downloaded";
+			mywarn "$results_id already downloaded";
 		} else {
 			my $downloaded_filename = transcribe($dl, $id);
 			if(-e $downloaded_filename) {
@@ -96,7 +113,6 @@ sub download_data {
 				print $fh $contents;
 				close $fh;
 
-				#my $contents_edited = read_and_parse_file($downloaded_filename, $id);
 				my $contents_edited = read_and_parse_file($results_id, $id);
 				write_file($results_id, $contents_edited);
 			} else {
@@ -136,6 +152,67 @@ sub download_data {
 			print $fh $title;
 			close $fh;
 		}
+
+
+		if(-e $comments_file) {
+			mywarn "$comments_file already exists";
+		} else {
+			my $command = qq#cd comments; python2.7 downloader.py --output "$comments_file" --youtubeid "$id"; cd -#;
+			debug $command;
+			system($command);
+
+		}
+
+		if(-e $comments_file && -e $comments_file) {
+			my @possible_timestamps = ();
+			my @lines = split(/\R/, read_file($comments_file));
+			foreach my $line (@lines) {
+				eval {
+					my $data_struct = parse_json($line);
+					if(exists $data_struct->{text}) {
+						my $text = $data_struct->{text};
+						if($text =~ m#((\R(?:\d{1,2}:)?\d{1,2}:\d{2}\b.*[a-z]{3,}.*){1,})#gism) {
+							my $text = $1;
+							my $votes = $data_struct->{votes};
+							my $number_of_timestamps = 0;
+							while ($text =~ m#\R(\b(?:\d{1,2}:)?\d{1,2}:\d{2}\b)#gism) {
+								warn $1;
+								$number_of_timestamps++;
+							}
+							if($number_of_timestamps >= 2) {
+								push @possible_timestamps, { text => $text, votes => $votes, number_of_timestamps => $number_of_timestamps };
+							}
+						}
+					}
+				}; 
+				if($@) {
+					print $@;
+				}
+			}
+			if(@possible_timestamps) {
+				my @rated_timestamps = sort {
+					$a->{number_of_timestamps} <=> $b->{number_of_timestamps} || 
+					$a->{votes} <=> $b->{votes} ||
+					length($a->{text}) <=> length($b->{text})
+				} @possible_timestamps;
+				die Dumper @rated_timestamps;
+			}
+		}
+	}
+}
+
+sub read_file {
+	my $filename = shift;
+	if (!-e $filename) {
+		return undef;
+	} else {
+		my $contents = '';
+		open my $fh, '<', $filename or die $!;
+		while (<$fh>) {
+			$contents .= $_;
+		}
+		close $fh;
+		return $contents;
 	}
 }
 
@@ -196,7 +273,11 @@ sub dl_playlist {
 		close $fh;
 	}
 
-	warn "got ".Dumper(@list);
+	if(@list) {
+		warn "got ".Dumper(@list);
+	} else {
+		die "Could not download playlist data, probably you need to update youtube-dl";
+	}
 
 	return @list;
 }
@@ -340,6 +421,8 @@ sub analyze_args {
 			$options{lang} = $1;
 		} elsif(m#^--name=(.*)$#) {
 			$options{name} = $1;
+		} elsif(m#^--random$#) {
+			$options{random} = 1;
 		} elsif(m#^--help$#) {
 			_help(0);
 		} elsif(m#^--parameter=(.*)$#) {
@@ -391,6 +474,11 @@ sub write_file {
 	open my $fh, '>', $file or die $!;
 	print $fh $contents;
 	close $fh or die $!;
+}
+
+sub uniq {
+    my %seen;
+    grep !$seen{$_}++, @_;
 }
 
 __DATA__
