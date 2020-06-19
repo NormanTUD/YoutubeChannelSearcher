@@ -211,7 +211,7 @@ sub clean_text {
 	my $text = shift;
 	my $cleaned = $text;
 
-	$cleaned =~ s/\s(?<![\r\n])+/ /gs;
+	$cleaned =~ s/\s+(?<![\r\n])/ /gs;
 
 	my @new = ();
 	my @splitted = split /[\r\n]/, $cleaned;
@@ -655,7 +655,7 @@ Stichwort: <form method="get">
 						print "<td>$duration</td>\n";
 						print "<td>$desc, $textfile</td>\n";
 						print "<td>$title</td>\n";
-						print "<td><span style='font-size: 8;'>$id</span></td>\n";
+						print "<td><span style='font-size: 8;'><a href='youtube.com/watch?v='>$id</a></span></td>\n";
 						print "<td><span style='font-size: 9;'$timestamps</span></td>\n";
 						print "<td>$string</td></tr>\n";
 					}
