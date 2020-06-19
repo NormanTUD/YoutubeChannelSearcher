@@ -656,7 +656,7 @@ Stichwort: <form method="get">
 						print "<td>$desc, $textfile</td>\n";
 						print "<td>$title</td>\n";
 						print "<td><span style='font-size: 8;'>$id</span></td>\n";
-						print "<td>$timestamps</td>\n";
+						print "<td><span style='font-size: 9;'$timestamps</span></td>\n";
 						print "<td>$string</td></tr>\n";
 					}
 					$i++;
