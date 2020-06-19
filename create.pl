@@ -630,6 +630,18 @@ Stichwort: <form method="get">
 
 					if(file_exists($timestamp_file)) {
 						$timestamps = nl2br(file_get_contents($timestamp_file));
+						$timestamps = preg_replace_callback(
+							"/((?:\d{1,2}:)?\d{1,2}:\d{2})/", function ($match) use ($id) {
+								$original = $match[0];
+
+								$str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $original);
+								sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
+								$time_seconds = $hours * 3600 + $minutes * 60 + $seconds;
+
+								return "<a href='https://www.youtube.com/watch?v=$id&t=$time_seconds'>$original</a>";
+							}, 
+							$timestamps
+						);
 					}
 
 					$textfile = "<a href='./results/$id.txt'>Text</a>";
