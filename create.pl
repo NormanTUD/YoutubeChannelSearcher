@@ -96,7 +96,6 @@ sub download_data {
 		my $desc_file = "$desc/".$id."_TITLE.txt";
 		my $title_file = "$titles/".$id."_TITLE.txt";
 		my $comments_file = "$comments/".$id.".json";
-		my $comments_timestamp_file = "$comments/".$id."_parsed.json";
 
 		if(file_contains($unavailable, $id)) {
 			mywarn "$id is listed in `$unavailable`, skipping it";
@@ -163,7 +162,8 @@ sub download_data {
 
 		}
 
-		if(-e $comments_file && -e $comments_file) {
+		my $comments_file_parsed  = "$comments/".$id."_0.json";
+		if(!-e $comments_file_parsed && -e $comments_file && -e $comments_file) {
 			my @possible_timestamps = ();
 			my @lines = split(/[\n\r]/, read_file($comments_file));
 			foreach my $line (@lines) {
@@ -171,22 +171,22 @@ sub download_data {
 					my $data_struct = parse_json($line);
 					if(exists $data_struct->{text}) {
 						my $text = $data_struct->{text};
-						if($text =~ m#((\R\s*(?:\d{1,2}:)?\d{1,2}:\d{2}\b.*[a-z]{3,}.*){1,})#gism) {
-							my $text = $1;
+						my $cleaned_text = clean_text($text);
+
+						if($text =~ m#((\R\s*(?:\d{1,2}:)?\d{1,2}:\d{2}\b.*[a-z]{3,}.*){1,})#gim) {
+							my $this_text = $1;
 							my $votes = $data_struct->{votes};
 							my $number_of_timestamps = 0;
-							while ($text =~ m#\R\s*(\b(?:\d{1,2}:)?\d{1,2}:\d{2}\b)#gism) {
-								warn $1;
+							while ($this_text =~ m#\R\s*(\b(?:\d{1,2}:)?\d{1,2}:\d{2}\b)#gism) {
 								$number_of_timestamps++;
 							}
 							if($number_of_timestamps >= 2) {
-								push @possible_timestamps, { text => $text, votes => $votes, number_of_timestamps => $number_of_timestamps };
+								push @possible_timestamps, { text => $this_text, votes => $votes, number_of_timestamps => $number_of_timestamps };
 							}
 						}
 					}
 				}; 
 				if($@) {
-					print $line;
 					die $@;
 				}
 			}
@@ -196,10 +196,33 @@ sub download_data {
 					$a->{votes} <=> $b->{votes} ||
 					length($b->{text}) <=> length($a->{text})
 				} @possible_timestamps;
-				die Dumper @rated_timestamps;
+				for my $index (0 .. $#rated_timestamps) {
+					$comments_file_parsed  = "$comments/".$id."_$index.json";
+					open my $fh, '>>', $comments_file_parsed;
+					print $fh $possible_timestamps[$index]->{text};
+					close $fh;
+				}
 			}
 		}
 	}
+}
+
+sub clean_text {
+	my $text = shift;
+	my $cleaned = $text;
+
+	$cleaned =~ s/\s(?<![\r\n])+/ /gs;
+
+	my @new = ();
+	my @splitted = split /[\r\n]/, $cleaned;
+	foreach my $string (@splitted) {
+		$string =~ s#^\s*##g;
+		push @new, $string;
+	}
+
+	$cleaned = join("\n", @new);
+
+	return $cleaned;
 }
 
 sub read_file {
@@ -394,22 +417,24 @@ sub create_index_file {
 	my $index = "$options{path}/index.php";
 	if(-e $index) {
 		mywarn "$index already exists!"	
-	} else {
-		my $contents = '';
-		while (<DATA>) {
-			$contents .= $_;
-		}
-
-		if($options{name}) {
-			$contents =~ s#SUCHENAME#$options{name}#g;
-		} else {
-			mywarn "Es wurde kein Name angegeben. Ersetze ihn manuell (SUCHENAME in der $index)"
-		}
-
-		open my $fh, '>', $index or die $!;
-		print $fh $contents;
-		close $fh;
 	}
+
+	unlink $index;
+
+	my $contents = '';
+	while (<DATA>) {
+		$contents .= $_;
+	}
+
+	if($options{name}) {
+		$contents =~ s#SUCHENAME#$options{name}#g;
+	} else {
+		mywarn "Es wurde kein Name angegeben. Ersetze ihn manuell (SUCHENAME in der $index)"
+	}
+
+	open my $fh, '>', $index or die $!;
+	print $fh $contents;
+	close $fh;
 }
 
 sub analyze_args {
@@ -571,6 +596,7 @@ Stichwort: <form method="get">
 				print "<th>Desc<br/>Text</th>\n";
 				print "<th>Titel</th>\n";
 				print "<th>ID</th>\n";
+				print "<th>Timestamp-Kommentare</th>\n";
 				print "<th>Match</th>\n";
 				print "</tr>\n";
 				$i = 1;
@@ -578,7 +604,14 @@ Stichwort: <form method="get">
 					$matches = $this_find['matches'];
 					$id = $this_find['id'];
 					$title_file = "titles/".$id."_TITLE.txt";
+					$timestamp_file = "comments/".$id."_0.json";
 					$title = '<i>Kein Titel</i>';
+					$timestamps = '<i>&mdash;</i>';
+
+					if(file_exists($title_file)) {
+						$title = file_get_contents($title_file);
+					}
+
 					if(file_exists($title_file)) {
 						$title = file_get_contents($title_file);
 					}
@@ -595,6 +628,10 @@ Stichwort: <form method="get">
 						$desc = "<a href='./$desc_file'>Desc</a>";
 					}
 
+					if(file_exists($timestamp_file)) {
+						$timestamps = nl2br(file_get_contents($timestamp_file));
+					}
+
 					$textfile = "<a href='./results/$id.txt'>Text</a>";
 
 					foreach ($matches as  $this_find_key2 => $this_find2) {
@@ -607,7 +644,7 @@ Stichwort: <form method="get">
 						print "<td>$desc, $textfile</td>\n";
 						print "<td>$title</td>\n";
 						print "<td><span style='font-size: 8;'>$id</span></td>\n";
-						#print "<td>$likes/$dislikes</td>\n";
+						print "<td>$timestamps</td>\n";
 						print "<td>$string</td></tr>\n";
 					}
 					$i++;
