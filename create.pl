@@ -82,6 +82,7 @@ sub download_data {
 			push @ids, $id;
 		}
 	}
+
 	@ids = uniq(@ids);
 	if($options{random}) {
 		@ids = sort { rand() <=> rand() } @ids;
@@ -416,10 +417,9 @@ sub create_index_file {
 	debug "create_index_file()";
 	my $index = "$options{path}/index.php";
 	if(-e $index) {
-		mywarn "$index already exists!"	
+		mywarn "$index already exists! Unlinking it.";
+		unlink $index;
 	}
-
-	unlink $index;
 
 	my $contents = '';
 	while (<DATA>) {
@@ -576,6 +576,20 @@ Stichwort: <form method="get">
 
 					fclose($fn);
 
+					if(file_exists("./comments/".$id."_0.json")) {
+						$fn = fopen("./comments/".$id."_0.json", "r");
+
+						while(!feof($fn))  {
+							$result = fgets($fn);
+							if(preg_match_all("/.*$this_stichwort.*/", $result, $matches, PREG_SET_ORDER)) {
+								$finds[] = array("matches" => $matches, "id" => $id);
+							}
+						}
+
+						fclose($fn);
+					}
+
+
 					$thistime = time();
 					if($thistime - $starttime > $timeouttime) {
 						$timeout = 1;
@@ -655,7 +669,7 @@ Stichwort: <form method="get">
 						print "<td>$duration</td>\n";
 						print "<td>$desc, $textfile</td>\n";
 						print "<td>$title</td>\n";
-						print "<td><span style='font-size: 8;'><a href='youtube.com/watch?v='>$id</a></span></td>\n";
+						print "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$id'>$id</a></span></td>\n";
 						print "<td><span style='font-size: 9;'$timestamps</span></td>\n";
 						print "<td>$string</td></tr>\n";
 					}
