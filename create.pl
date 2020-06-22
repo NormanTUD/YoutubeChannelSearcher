@@ -67,6 +67,7 @@ sub download_data {
 	make_path($dl);
 	make_path($durations);
 	make_path($desc);
+	make_path($titles);
 	make_path($comments);
 
 	my @ids = ();
