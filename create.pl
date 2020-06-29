@@ -728,7 +728,7 @@ __DATA__
 							$timestamps = '';
 							$timestamps .= '<div class="tab">';
 							for ($n = 0; $n < count($timestamps_array); $n++) {
-								$timestamps .= '<button class="tablinks" onclick="openComment(event, \''.$id.'_'.$i.'_'.$n.'\', \''.$id.'_'.$i.'\')">'.$n.'</button>';
+								$timestamps .= '<button class="tablinks" onclick="openComment(event, \''.$id.'_'.$i.'_'.$n.'\', \''.$id.'_'.$i.'\')">'.($n + 1).'</button>';
 							}
 							$timestamps .= '</div>';
 							for ($n = 0; $n < count($timestamps_array); $n++) {
