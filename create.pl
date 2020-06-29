@@ -529,9 +529,18 @@ __DATA__
 	</style>
 </head>
 <h1>SUCHENAME-Suche</h1>
-Stichwort: <form method="get">
-	<input name="suche1" value="<?php print array_key_exists('suche1', $_GET) ? htmlentities($_GET['suche1']) : ''; ?>" />
-	<input type="submit" value="Suchen" />
+<form method="get">
+	<table>
+		<tr>
+			<td>Stichwort</td><td><input name="suche1" value="<?php print array_key_exists('suche1', $_GET) ? htmlentities($_GET['suche1']) : ''; ?>" /></td>
+		<tr>
+		</tr>
+			<td>Hat Zeitkommentar?</td></td><td><input name="hastimecomment" value="1" <?php print array_key_exists('hastimecomment', $_GET) ? ' checked="CHECKED" ' : ''; ?> type="checkbox" /></td
+		</tr>
+		<tr>
+			<td></td><td><input type="submit" value="Suchen" /></td>
+		</tr>
+	</table>
 </form>
 
 <?php
@@ -623,58 +632,60 @@ Stichwort: <form method="get">
 					$title = '<i>Kein Titel</i>';
 					$timestamps = '<i>&mdash;</i>';
 
-					if(file_exists($title_file)) {
-						$title = file_get_contents($title_file);
+					if((array_key_exists('hastimecomment', $_GET) && file_exists($timestamp_file)) || !array_key_exists('hastimecomment', $_GET)) {
+						if(file_exists($title_file)) {
+							$title = file_get_contents($title_file);
+						}
+
+						if(file_exists($title_file)) {
+							$title = file_get_contents($title_file);
+						}
+
+						$duration_file = "durations/".$id."_TITLE.txt";
+						$duration = '<i>Unbekannte Länge</i>';
+						if(file_exists($duration_file)) {
+							$duration = file_get_contents($duration_file);
+						}
+
+						$desc_file = "desc/".$id."_TITLE.txt";
+						$desc = '<i>Keine Beschreibung</i>';
+						if(file_exists($desc_file)) {
+							$desc = "<a href='./$desc_file'>Desc</a>";
+						}
+
+						if(file_exists($timestamp_file)) {
+							$timestamps = nl2br(file_get_contents($timestamp_file));
+							$timestamps = preg_replace_callback(
+								"/((?:\d{1,2}:)?\d{1,2}:\d{2})/", function ($match) use ($id) {
+									$original = $match[0];
+
+									$str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $original);
+									sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
+									$time_seconds = $hours * 3600 + $minutes * 60 + $seconds;
+
+									return "<a href='https://www.youtube.com/watch?v=$id&t=$time_seconds'>$original</a>";
+								}, 
+								$timestamps
+							);
+						}
+
+						$textfile = "<a href='./results/$id.txt'>Text</a>";
+
+						foreach ($matches as  $this_find_key2 => $this_find2) {
+							$string = $this_find2[0];
+							$string = preg_replace($url, '<a href="$0" target="_blank" title="$0">$0</a>', $string);
+							$string = preg_replace("/($this_stichwort)/", "<span class='find'>$0</span>", $string);
+							print "<tr class='tr_".($i % 2)."'>\n";
+							print "<td>$i</td>\n";
+							print "<td>$duration</td>\n";
+							print "<td>$desc, $textfile</td>\n";
+							print "<td>$title</td>\n";
+							print "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$id'>$id</a></span></td>\n";
+							print "<td><span style='font-size: 9;'$timestamps</span></td>\n";
+							print "<td>$string</td></tr>\n";
+						}
+						$i++;
 					}
-
-					if(file_exists($title_file)) {
-						$title = file_get_contents($title_file);
-					}
-
-					$duration_file = "durations/".$id."_TITLE.txt";
-					$duration = '<i>Unbekannte Länge</i>';
-					if(file_exists($duration_file)) {
-						$duration = file_get_contents($duration_file);
-					}
-
-					$desc_file = "desc/".$id."_TITLE.txt";
-					$desc = '<i>Keine Beschreibung</i>';
-					if(file_exists($desc_file)) {
-						$desc = "<a href='./$desc_file'>Desc</a>";
-					}
-
-					if(file_exists($timestamp_file)) {
-						$timestamps = nl2br(file_get_contents($timestamp_file));
-						$timestamps = preg_replace_callback(
-							"/((?:\d{1,2}:)?\d{1,2}:\d{2})/", function ($match) use ($id) {
-								$original = $match[0];
-
-								$str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $original);
-								sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-								$time_seconds = $hours * 3600 + $minutes * 60 + $seconds;
-
-								return "<a href='https://www.youtube.com/watch?v=$id&t=$time_seconds'>$original</a>";
-							}, 
-							$timestamps
-						);
-					}
-
-					$textfile = "<a href='./results/$id.txt'>Text</a>";
-
-					foreach ($matches as  $this_find_key2 => $this_find2) {
-						$string = $this_find2[0];
-						$string = preg_replace($url, '<a href="$0" target="_blank" title="$0">$0</a>', $string);
-						$string = preg_replace("/($this_stichwort)/", "<span class='find'>$0</span>", $string);
-						print "<tr class='tr_".($i % 2)."'>\n";
-						print "<td>$i</td>\n";
-						print "<td>$duration</td>\n";
-						print "<td>$desc, $textfile</td>\n";
-						print "<td>$title</td>\n";
-						print "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$id'>$id</a></span></td>\n";
-						print "<td><span style='font-size: 9;'$timestamps</span></td>\n";
-						print "<td>$string</td></tr>\n";
-					}
-					$i++;
 				}
 				print "</table>\n";
 				if($timeout) {
