@@ -559,7 +559,25 @@ __DATA__
 			border-top: none;
 		}
 	</style>
+	<script>
+		function openCommentNoMarking(idname) {
+			var i, tabcontent, tablinks;
+			tabcontent = document.getElementsByClassName("tabcontent");
+			for (i = 0; i < tabcontent.length; i++) {
+				tabcontent[i].style.display = "none";
+			}
+			tablinks = document.getElementsByClassName("tablinks");
+			for (i = 0; i < tablinks.length; i++) {
+				tablinks[i].className = tablinks[i].className.replace(" active", "");
+			}
+			document.getElementById(idname).style.display = "block";
+		}
 
+		function openComment(evt, idname) {
+			openCommentNoMarking(idname);
+			evt.currentTarget.className += " active";
+		}
+	</script>
 </head>
 <h1>SUCHENAME-Suche</h1>
 <form method="get">
@@ -578,6 +596,7 @@ __DATA__
 
 <?php
 	$suchworte = array();
+	$open_comments = array();
 
 	foreach ($_GET as $key => $value) {
 		if(preg_match('/suche\d+/', $key)) {
@@ -710,14 +729,15 @@ __DATA__
 							$timestamps = '';
 							$timestamps .= '<div class="tab">';
 							for ($n = 0; $n < count($timestamps_array); $n++) {
-								$timestamps .= '<button class="tablinks" onclick="openComment(event, \''.$id.'_'.$n.'\')">'.$n.'</button>';
+								$timestamps .= '<button class="tablinks" onclick="openComment(event, \''.$id.'_'.$i.'_'.$n.'\')">'.$n.'</button>';
 							}
 							$timestamps .= '</div>';
 							for ($n = 0; $n < count($timestamps_array); $n++) {
-								$timestamps .= '<div id="'.$id.'_'.$n.'" class="tabcontent">';
+								$timestamps .= '<div id="'.$id.'_'.$i.'_'.$n.'" class="tabcontent">';
 								$timestamps .= $timestamps_array[$n];
 								$timestamps .= '</div>';
 							}
+							$open_comments[] = 'openCommentNoMarking(\''.$id.'_'.$i.'_0\');';
 						} else if (count($timestamps_array) == 1) {
 							$timestamps = $timestamps_array[0];
 						}
@@ -749,19 +769,15 @@ __DATA__
 			print "Dir ./results/ not found";
 		}
 	}
-?>
-<script>
-	function openComment(evt, cityName) {
-		var i, tabcontent, tablinks;
-		tabcontent = document.getElementsByClassName("tabcontent");
-		for (i = 0; i < tabcontent.length; i++) {
-			tabcontent[i].style.display = "none";
+
+	if(0 && count($open_comments)) {
+		print "<script type='text/javascript'>\n";
+		print "function open_comments() {\n";
+		foreach ($open_comments as $this_open_comments) {
+			print "$this_open_comments\n";
 		}
-		tablinks = document.getElementsByClassName("tablinks");
-		for (i = 0; i < tablinks.length; i++) {
-			tablinks[i].className = tablinks[i].className.replace(" active", "");
-		}
-		document.getElementById(cityName).style.display = "block";
-		evt.currentTarget.className += " active";
+		print "}\n";
+		print "open_comments();\n";
+		print "</script>\n";
 	}
-</script>
+?>
