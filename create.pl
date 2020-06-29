@@ -599,7 +599,6 @@ __DATA__
 						fclose($fn);
 					}
 
-
 					$thistime = time();
 					if($thistime - $starttime > $timeouttime) {
 						$timeout = 1;
