@@ -526,7 +526,46 @@ __DATA__
 		.tr_1 {
 			background-color: #ededed;
 		}
+		body {font-family: Arial;}
+
+		/* Style the tab */
+		.tab {
+		overflow: hidden;
+		border: 1px solid #ccc;
+		background-color: #f1f1f1;
+		}
+
+		/* Style the buttons inside the tab */
+		.tab button {
+		background-color: inherit;
+		float: left;
+		border: none;
+		outline: none;
+		cursor: pointer;
+		padding: 14px 16px;
+		transition: 0.3s;
+		font-size: 17px;
+		}
+
+		/* Change background color of buttons on hover */
+		.tab button:hover {
+		background-color: #ddd;
+		}
+
+		/* Create an active/current tablink class */
+		.tab button.active {
+		background-color: #ccc;
+		}
+
+		/* Style the tab content */
+		.tabcontent {
+		display: none;
+		padding: 6px 12px;
+		border: 1px solid #ccc;
+		border-top: none;
+		}
 	</style>
+
 </head>
 <h1>SUCHENAME-Suche</h1>
 <form method="get">
@@ -652,9 +691,12 @@ __DATA__
 							$desc = "<a href='./$desc_file'>Desc</a>";
 						}
 
-						if(file_exists($timestamp_file)) {
-							$timestamps = nl2br(file_get_contents($timestamp_file));
-							$timestamps = preg_replace_callback(
+						$timestamps_array = array();
+						$this_timestamp_file = "./comments/".$id."_0.json";
+						$n = 0;
+						while (file_exists($this_timestamp_file)) {
+							$timestamps_file = nl2br(file_get_contents($this_timestamp_file));
+							$timestamps_array[] = preg_replace_callback(
 								"/((?:\d{1,2}:)?\d{1,2}:\d{2})/", function ($match) use ($id) {
 									$original = $match[0];
 
@@ -664,8 +706,26 @@ __DATA__
 
 									return "<a href='https://www.youtube.com/watch?v=$id&t=$time_seconds'>$original</a>";
 								}, 
-								$timestamps
+								$timestamps_file
 							);
+							$n++;
+							$this_timestamp_file = "./comments/".$id."_".$n.".json";
+						}
+
+						if(count($timestamps_array) > 1) {
+							$timestamps = '';
+							$timestamps .= '<div class="tab">';
+							for ($n = 0; $n < count($timestamps_array); $n++) {
+								$timestamps .= '<button class="tablinks" onclick="openComment(event, \''.$id.'_'.$n.'\')">'.$n.'</button>';
+							}
+							$timestamps .= '</div>';
+							for ($n = 0; $n < count($timestamps_array); $n++) {
+								$timestamps .= '<div id="'.$id.'_'.$n.'" class="tabcontent">';
+								$timestamps .= $timestamps_array[$n];
+								$timestamps .= '</div>';
+							}
+						} else if (count($timestamps_array) == 1) {
+							$timestamps = $timestamps_array[0];
 						}
 
 						$textfile = "<a href='./results/$id.txt'>Text</a>";
@@ -680,7 +740,7 @@ __DATA__
 							print "<td>$desc, $textfile</td>\n";
 							print "<td>$title</td>\n";
 							print "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$id'>$id</a></span></td>\n";
-							print "<td><span style='font-size: 9;'$timestamps</span></td>\n";
+							print "<td><span style='font-size: 9;'>$timestamps</span></td>\n";
 							print "<td>$string</td></tr>\n";
 						}
 						$i++;
@@ -696,3 +756,18 @@ __DATA__
 		}
 	}
 ?>
+<script>
+	function openComment(evt, cityName) {
+		var i, tabcontent, tablinks;
+		tabcontent = document.getElementsByClassName("tabcontent");
+		for (i = 0; i < tabcontent.length; i++) {
+			tabcontent[i].style.display = "none";
+		}
+		tablinks = document.getElementsByClassName("tablinks");
+		for (i = 0; i < tablinks.length; i++) {
+			tablinks[i].className = tablinks[i].className.replace(" active", "");
+		}
+		document.getElementById(cityName).style.display = "block";
+		evt.currentTarget.className += " active";
+	}
+</script>
