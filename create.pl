@@ -560,9 +560,9 @@ __DATA__
 		}
 	</style>
 	<script>
-		function openCommentNoMarking(idname) {
+		function openCommentNoMarking(idname, ytid) {
 			var i, tabcontent, tablinks;
-			tabcontent = document.getElementsByClassName("tabcontent");
+			tabcontent = document.getElementsByClassName("tabcontent_" + ytid);
 			for (i = 0; i < tabcontent.length; i++) {
 				tabcontent[i].style.display = "none";
 			}
@@ -573,8 +573,8 @@ __DATA__
 			document.getElementById(idname).style.display = "block";
 		}
 
-		function openComment(evt, idname) {
-			openCommentNoMarking(idname);
+		function openComment(evt, idname, ytid) {
+			openCommentNoMarking(idname, ytid);
 			evt.currentTarget.className += " active";
 		}
 	</script>
@@ -596,7 +596,6 @@ __DATA__
 
 <?php
 	$suchworte = array();
-	$open_comments = array();
 
 	foreach ($_GET as $key => $value) {
 		if(preg_match('/suche\d+/', $key)) {
@@ -729,15 +728,20 @@ __DATA__
 							$timestamps = '';
 							$timestamps .= '<div class="tab">';
 							for ($n = 0; $n < count($timestamps_array); $n++) {
-								$timestamps .= '<button class="tablinks" onclick="openComment(event, \''.$id.'_'.$i.'_'.$n.'\')">'.$n.'</button>';
+								$timestamps .= '<button class="tablinks" onclick="openComment(event, \''.$id.'_'.$i.'_'.$n.'\', \''.$id.'_'.$i.'\')">'.$n.'</button>';
 							}
 							$timestamps .= '</div>';
 							for ($n = 0; $n < count($timestamps_array); $n++) {
-								$timestamps .= '<div id="'.$id.'_'.$i.'_'.$n.'" class="tabcontent">';
+								$style = '';
+								if($n == 0) {
+									$style = " style='display: block !important;' ";
+								} else {
+									$style = " style='display: none !important;' ";
+								}
+								$timestamps .= '<div '.$style.' id="'.$id.'_'.$i.'_'.$n.'" class="tabcontent_'.$id.'_'.$i.'">';
 								$timestamps .= $timestamps_array[$n];
 								$timestamps .= '</div>';
 							}
-							$open_comments[] = 'openCommentNoMarking(\''.$id.'_'.$i.'_0\');';
 						} else if (count($timestamps_array) == 1) {
 							$timestamps = $timestamps_array[0];
 						}
@@ -768,16 +772,5 @@ __DATA__
 		} else {
 			print "Dir ./results/ not found";
 		}
-	}
-
-	if(0 && count($open_comments)) {
-		print "<script type='text/javascript'>\n";
-		print "function open_comments() {\n";
-		foreach ($open_comments as $this_open_comments) {
-			print "$this_open_comments\n";
-		}
-		print "}\n";
-		print "open_comments();\n";
-		print "</script>\n";
 	}
 ?>
