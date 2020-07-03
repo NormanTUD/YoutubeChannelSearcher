@@ -18,7 +18,8 @@ my %options = (
 	lang => 'de',
 	random => 0,
 	comments => 1,
-	repair => 0
+	repair => 0,
+	titleregex => ''
 );
 
 analyze_args(@ARGV);
@@ -176,6 +177,7 @@ sub download_title {
 		print $fh $title;
 		close $fh;
 	}
+	return read_file($title_file);
 }
 
 sub download_text {
@@ -283,18 +285,26 @@ sub download_data {
 			next;
 		}
 
-		download_text($results_id, $dl, $id);	
+		my $title = download_title($title_file, $id);
 
-		download_title($title_file, $id);
+		if(!$options{titleregex} || $title =~ m#$options{titleregex}#i) {
+			if(!$options{titleregex}) {
+				debug "--titleregex not defined";
+			} else {
+				debug "$title =~ --titleregex=$options{titleregex}";
+			}
+			download_text($results_id, $dl, $id);	
 
-		download_description($desc_file, $id);
+			download_description($desc_file, $id);
 
-		download_duration($duration_file, $id);
+			download_duration($duration_file, $id);
 
-		download_comments($comments_file, $id);
+			download_comments($comments_file, $id);
 
-		get_timestamp_comments($comments, $id, $comments_file);
-
+			get_timestamp_comments($comments, $id, $comments_file);
+		} else {
+			warn "$title does not match $options{titleregex}";
+		}
 	}
 }
 
@@ -534,6 +544,8 @@ sub analyze_args {
 			$options{debug} = 1;
 		} elsif(m#^--repair$#) {
 			$options{repair} = 1;
+		} elsif(m#^--titleregex=(.*)$#) {
+			$options{titleregex} = $1;
 		} elsif(m#^--path=(.*)$#) {
 			$options{path} = $1;
 		} elsif(m#^--nocomments$#) {
