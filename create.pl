@@ -16,7 +16,8 @@ my %options = (
 	path => undef,
 	name => undef,
 	lang => 'de',
-	random => 0
+	random => 0,
+	comments => 1
 );
 
 analyze_args(@ARGV);
@@ -157,10 +158,11 @@ sub download_data {
 
 		if(-e $comments_file) {
 			mywarn "$comments_file already exists";
-		} else {
+		} elsif ($options{comments}) {
 			my $command = qq#cd comments; python2.7 downloader.py --output "$comments_file" --youtubeid "$id"; cd -#;
 			debug $command;
 			system($command);
+		} else {
 
 		}
 
@@ -200,6 +202,7 @@ sub download_data {
 				} @possible_timestamps;
 				for my $index (0 .. $#rated_timestamps) {
 					$comments_file_parsed  = "$comments/".$id."_$index.json";
+					warn "Printing comment to $comments_file_parsed\n";
 					open my $fh, '>>', $comments_file_parsed;
 					print $fh $possible_timestamps[$index]->{text};
 					close $fh;
@@ -444,6 +447,8 @@ sub analyze_args {
 			$options{debug} = 1;
 		} elsif(m#^--path=(.*)$#) {
 			$options{path} = $1;
+		} elsif(m#^--nocomments$#) {
+			$options{comments} = 0;
 		} elsif(m#^--lang=(.*)$#) {
 			$options{lang} = $1;
 		} elsif(m#^--name=(.*)$#) {
