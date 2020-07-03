@@ -9,6 +9,7 @@ use autodie;
 use Digest::MD5 qw/md5_hex/;
 use Smart::Comments;
 use JSON::Parse 'parse_json';
+use File::Path;
 
 my %options = (
 	debug => 0,
@@ -53,6 +54,10 @@ sub main {
 		repair_data();
 	} else {
 		mywarn "No --parameter or --repair option given, not downloading any videos";
+	}
+
+	if(-e "$options{path}/dl") {
+		rmtree("$options{path}/dl");
 	}
 }
 
@@ -107,6 +112,7 @@ sub get_timestamp_comments {
 				die $@;
 			}
 		}
+
 		if(@possible_timestamps) {
 			my @rated_timestamps = sort {
 				$a->{number_of_timestamps} <=> $b->{number_of_timestamps} || 
@@ -294,13 +300,9 @@ sub download_data {
 				debug "$title =~ --titleregex=$options{titleregex}";
 			}
 			download_text($results_id, $dl, $id);	
-
 			download_description($desc_file, $id);
-
 			download_duration($duration_file, $id);
-
 			download_comments($comments_file, $id);
-
 			get_timestamp_comments($comments, $id, $comments_file);
 		} else {
 			warn "$title does not match $options{titleregex}";
