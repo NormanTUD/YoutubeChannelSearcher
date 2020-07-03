@@ -34,7 +34,7 @@ sub mywarn (@) {
 sub debug (@) {
 	return if !$options{debug};
 	foreach (@_) {
-		warn color("blue").$_.color("reset")."\n";
+		warn color("white on_blue").$_.color("reset")."\n";
 	}
 }
 
@@ -70,17 +70,19 @@ sub get_defect_files {
 	if(-d $results) {
 		while (my $file = <$results/*.txt>) {
 			my $contents = read_file($file);
-			#  00:04:08.770 --> 00:04:14.989
 			if ($contents =~ m#\d{2}:\d{2}:\d{2}\.\d{3}\s+-->\s+\d{2}:\d{2}:\d{2}\.\d{3}#) {
 				my $id = $file;
 				$id =~ s#\.txt##g;
 				$id =~ s#.*/##g;
 				push @defect, $id;
 				unlink $file;
+				debug "Content seems faulty";
+			} else {
+				debug "Content seems ok";
 			}
 		}
 	} else {
-		warn "$results not found";
+		mywarn "$results not found";
 	}
 	return @defect;
 }
@@ -125,7 +127,7 @@ sub get_timestamp_comments {
 			} @possible_timestamps;
 			for my $index (0 .. $#rated_timestamps) {
 				$comments_file_parsed  = "$comments/".$id."_$index.json";
-				warn "Printing comment to $comments_file_parsed\n";
+				mywarn "Printing comment to $comments_file_parsed\n";
 				open my $fh, '>>', $comments_file_parsed;
 				print $fh $possible_timestamps[$index]->{text};
 				close $fh;
@@ -227,7 +229,7 @@ sub repair_data {
 	my @ids = get_defect_files();
 
 	foreach my $id (@ids) { ### Working===[%]     done
-		warn "\n"; # for smart comments
+		mywarn "\n"; # for smart comments
 		debug "Getting data for id $id";
 		my $unavailable = "$options{path}/unavailable";
 		my $results_id = "$results/$id.txt";
@@ -286,7 +288,7 @@ sub download_data {
 
 
 	foreach my $id (@ids) { ### Working===[%]     done
-		warn "\n"; # for smart comments
+		mywarn "\n"; # for smart comments
 		debug "Getting data for id $id";
 		my $unavailable = "$options{path}/unavailable";
 		my $results_id = "$results/$id.txt";
@@ -314,7 +316,7 @@ sub download_data {
 			download_comments($comments_file, $id);
 			get_timestamp_comments($comments, $id, $comments_file);
 		} else {
-			warn "$title does not match $options{titleregex}";
+			mywarn "$title does not match $options{titleregex}";
 		}
 	}
 }
@@ -412,7 +414,7 @@ sub dl_playlist {
 	}
 
 	if(@list) {
-		warn "got ".Dumper(@list);
+		mywarn "got ".Dumper(@list);
 	} else {
 		die "Could not download playlist data, probably you need to update youtube-dl";
 	}
@@ -574,7 +576,7 @@ sub analyze_args {
 		} elsif(m#^--parameter=(.*)$#) {
 			$options{parameter} = $1;
 		} else {
-			warn color("red")."Unknown parameter `$_`".color("reset")."\n";
+			mywarn color("red")."Unknown parameter `$_`".color("reset")."\n";
 			_help(1);
 		}
 	}
