@@ -62,14 +62,12 @@ sub get_defect_files {
 		while (my $file = <$results/*.txt>) {
 			my $contents = read_file($file);
 			#  00:04:08.770 --> 00:04:14.989
-			if ($file !~ m#______DEFUNCT# && $contents =~ m#\d{2}:\d{2}:\d{2}\.\d{3}\s+-->\s+\d{2}:\d{2}:\d{2}\.\d{3}#) {
+			if ($contents =~ m#\d{2}:\d{2}:\d{2}\.\d{3}\s+-->\s+\d{2}:\d{2}:\d{2}\.\d{3}#) {
 				my $id = $file;
 				$id =~ s#\.txt##g;
 				$id =~ s#.*/##g;
 				push @defect, $id;
-				my $command = "mv '$file' '$file"."______DEFUNCT'";
-				debug $command;
-				qx($command);
+				unlink $file;
 			}
 		}
 	} else {
