@@ -17,7 +17,8 @@ my %options = (
 	name => undef,
 	lang => 'de',
 	random => 0,
-	comments => 1
+	comments => 1,
+	repair => 0
 );
 
 analyze_args(@ARGV);
@@ -47,9 +48,183 @@ sub main {
 
 	if($options{parameter}) {
 		download_data();
+	} elsif ($options{repair}) {
+		repair_data();
 	} else {
-		mywarn "No --parameter option given, not downloading any videos";
+		mywarn "No --parameter or --repair option given, not downloading any videos";
 	}
+}
+
+sub get_defect_files {
+	my @defect = ();
+	my $results = "$options{path}/results/";
+	if(-d $results) {
+		while (my $file = <$results/*.txt>) {
+			my $contents = read_file($file);
+			#  00:04:08.770 --> 00:04:14.989
+			if ($file !~ m#______DEFUNCT# && $contents =~ m#\d{2}:\d{2}:\d{2}\.\d{3}\s+-->\s+\d{2}:\d{2}:\d{2}\.\d{3}#) {
+				my $id = $file;
+				$id =~ s#\.txt##g;
+				$id =~ s#.*/##g;
+				push @defect, $id;
+				my $command = "mv '$file' '$file"."______DEFUNCT'";
+				debug $command;
+				qx($command);
+			}
+		}
+	} else {
+		warn "$results not found";
+	}
+	return @defect;
+}
+
+sub get_timestamp_comments {
+	my ($comments, $id, $comments_file) = @_; 
+	my $comments_file_parsed  = "$comments/".$id."_0.json";
+	if(!-e $comments_file_parsed && -e $comments_file && -e $comments_file) {
+		my @possible_timestamps = ();
+		my @lines = split(/[\n\r]/, read_file($comments_file));
+		foreach my $line (@lines) {
+			eval {
+				my $data_struct = parse_json($line);
+				if(exists $data_struct->{text}) {
+					my $text = $data_struct->{text};
+					my $cleaned_text = clean_text($text);
+
+					if($text =~ m#((\R\s*(?:\d{1,2}:)?\d{1,2}:\d{2}\b.*[a-z]{3,}.*){1,})#gim) {
+						my $this_text = $1;
+						my $votes = $data_struct->{votes};
+						my $number_of_timestamps = 0;
+						while ($this_text =~ m#\R\s*(\b(?:\d{1,2}:)?\d{1,2}:\d{2}\b)#gism) {
+							$number_of_timestamps++;
+						}
+						if($number_of_timestamps >= 2) {
+							push @possible_timestamps, { text => $this_text, votes => $votes, number_of_timestamps => $number_of_timestamps };
+						}
+					}
+				}
+			}; 
+			if($@) {
+				die $@;
+			}
+		}
+		if(@possible_timestamps) {
+			my @rated_timestamps = sort {
+				$a->{number_of_timestamps} <=> $b->{number_of_timestamps} || 
+				$a->{votes} <=> $b->{votes} ||
+				length($b->{text}) <=> length($a->{text})
+			} @possible_timestamps;
+			for my $index (0 .. $#rated_timestamps) {
+				$comments_file_parsed  = "$comments/".$id."_$index.json";
+				warn "Printing comment to $comments_file_parsed\n";
+				open my $fh, '>>', $comments_file_parsed;
+				print $fh $possible_timestamps[$index]->{text};
+				close $fh;
+			}
+		}
+	}
+}
+
+sub download_comments {
+	my ($comments_file, $id) = @_;
+	if(-e $comments_file) {
+		mywarn "$comments_file already exists";
+	} elsif ($options{comments}) {
+		my $command = qq#cd comments; python2.7 downloader.py --output "$comments_file" --youtubeid -- "$id"; cd -#;
+		debug $command;
+		system($command);
+	} else {
+		debug "Not downloading comments because of --nocomments";
+	}
+}
+
+sub download_duration {
+	my ($duration_file, $id) = @_;
+	if(-e $duration_file) {
+		mywarn "$duration_file already exists";
+	} else {
+		my $command = qq#youtube-dl --get-duration -- "$id"#;
+		debug $command;
+		my $title = qx($command);
+		open my $fh, '>', $duration_file;
+		print $fh $title;
+		close $fh;
+	}
+}
+
+sub download_description {
+	my ($desc_file, $id) = @_;
+	if(-e $desc_file) {
+		mywarn "$desc_file already exists";
+	} else {
+		my $command = qq#youtube-dl --get-description -- "$id"#;
+		debug $command;
+		my $title = qx($command);
+		open my $fh, '>', $desc_file;
+		print $fh $title;
+		close $fh;
+	}
+}
+
+sub download_title {
+	my ($title_file, $id) = @_;
+	if(-e $title_file) {
+		mywarn "$title_file already exists";
+	} else {
+		my $command = qq#youtube-dl --get-title -- "$id"#;
+		debug $command;
+		my $title = qx($command);
+		open my $fh, '>', $title_file;
+		print $fh $title;
+		close $fh;
+	}
+}
+
+sub download_text {
+	my ($results_id, $dl, $id) = @_;
+	if (-f $results_id) {
+		mywarn "$results_id already downloaded";
+	} else {
+		my $downloaded_filename = transcribe($dl, $id);
+		if(-e $downloaded_filename) {
+			my $contents = parse_vtt($downloaded_filename);
+			open my $fh, '>', $results_id or die $!;
+			print $fh $contents;
+			close $fh;
+
+			my $contents_edited = read_and_parse_file($results_id, $id);
+			write_file($results_id, $contents_edited);
+		} else {
+			mywarn "$downloaded_filename did not get downloaded correctly";
+		}
+	}
+}
+
+sub repair_data {
+	debug "repair_data()";
+
+	my $results = "$options{path}/results";
+	my $dl = "$options{path}/dl";
+
+	make_path($results);
+	make_path($dl);
+
+	my @ids = get_defect_files();
+
+	foreach my $id (@ids) { ### Working===[%]     done
+		warn "\n"; # for smart comments
+		debug "Getting data for id $id";
+		my $unavailable = "$options{path}/unavailable";
+		my $results_id = "$results/$id.txt";
+
+		if(file_contains($unavailable, $id)) {
+			mywarn "$id is listed in `$unavailable`, skipping it";
+			next;
+		}
+
+		download_text($results_id, $dl, $id);	
+	}
+
 }
 
 sub download_data {
@@ -72,10 +247,14 @@ sub download_data {
 	make_path($comments);
 
 	my @ids = ();
-	if($start =~ m#list#) {
-		push @ids, dl_playlist($start);
-	} else {
-		push @ids, $start;
+
+
+	if($start) {
+		if($start =~ m#list#) {
+			push @ids, dl_playlist($start);
+		} else {
+			push @ids, $start;
+		}
 	}
 
 	while (my $filename = <$results/*.txt>) {
@@ -89,6 +268,7 @@ sub download_data {
 	if($options{random}) {
 		@ids = sort { rand() <=> rand() } @ids;
 	}
+
 
 	foreach my $id (@ids) { ### Working===[%]     done
 		warn "\n"; # for smart comments
@@ -105,110 +285,18 @@ sub download_data {
 			next;
 		}
 
-		if (-f $results_id) {
-			mywarn "$results_id already downloaded";
-		} else {
-			my $downloaded_filename = transcribe($dl, $id);
-			if(-e $downloaded_filename) {
-				my $contents = parse_vtt($downloaded_filename);
-				open my $fh, '>', $results_id or die $!;
-				print $fh $contents;
-				close $fh;
+		download_text($results_id, $dl, $id);	
 
-				my $contents_edited = read_and_parse_file($results_id, $id);
-				write_file($results_id, $contents_edited);
-			} else {
-				mywarn "$downloaded_filename did not get downloaded correctly";
-			}
-		}
+		download_title($title_file, $id);
 
-		if(-e $title_file) {
-			mywarn "$title_file already exists";
-		} else {
-			my $command = qq#youtube-dl --get-title -- "$id"#;
-			debug $command;
-			my $title = qx($command);
-			open my $fh, '>', $title_file;
-			print $fh $title;
-			close $fh;
-		}
+		download_description($desc_file, $id);
 
-		if(-e $desc_file) {
-			mywarn "$desc_file already exists";
-		} else {
-			my $command = qq#youtube-dl --get-description -- "$id"#;
-			debug $command;
-			my $title = qx($command);
-			open my $fh, '>', $desc_file;
-			print $fh $title;
-			close $fh;
-		}
+		download_duration($duration_file, $id);
 
-		if(-e $duration_file) {
-			mywarn "$duration_file already exists";
-		} else {
-			my $command = qq#youtube-dl --get-duration -- "$id"#;
-			debug $command;
-			my $title = qx($command);
-			open my $fh, '>', $duration_file;
-			print $fh $title;
-			close $fh;
-		}
+		download_comments($comments_file, $id);
 
+		get_timestamp_comments($comments, $id, $comments_file);
 
-		if(-e $comments_file) {
-			mywarn "$comments_file already exists";
-		} elsif ($options{comments}) {
-			my $command = qq#cd comments; python2.7 downloader.py --output "$comments_file" --youtubeid "$id"; cd -#;
-			debug $command;
-			system($command);
-		} else {
-
-		}
-
-		my $comments_file_parsed  = "$comments/".$id."_0.json";
-		if(!-e $comments_file_parsed && -e $comments_file && -e $comments_file) {
-			my @possible_timestamps = ();
-			my @lines = split(/[\n\r]/, read_file($comments_file));
-			foreach my $line (@lines) {
-				eval {
-					my $data_struct = parse_json($line);
-					if(exists $data_struct->{text}) {
-						my $text = $data_struct->{text};
-						my $cleaned_text = clean_text($text);
-
-						if($text =~ m#((\R\s*(?:\d{1,2}:)?\d{1,2}:\d{2}\b.*[a-z]{3,}.*){1,})#gim) {
-							my $this_text = $1;
-							my $votes = $data_struct->{votes};
-							my $number_of_timestamps = 0;
-							while ($this_text =~ m#\R\s*(\b(?:\d{1,2}:)?\d{1,2}:\d{2}\b)#gism) {
-								$number_of_timestamps++;
-							}
-							if($number_of_timestamps >= 2) {
-								push @possible_timestamps, { text => $this_text, votes => $votes, number_of_timestamps => $number_of_timestamps };
-							}
-						}
-					}
-				}; 
-				if($@) {
-					die $@;
-				}
-			}
-			if(@possible_timestamps) {
-				my @rated_timestamps = sort {
-					$a->{number_of_timestamps} <=> $b->{number_of_timestamps} || 
-					$a->{votes} <=> $b->{votes} ||
-					length($b->{text}) <=> length($a->{text})
-				} @possible_timestamps;
-				for my $index (0 .. $#rated_timestamps) {
-					$comments_file_parsed  = "$comments/".$id."_$index.json";
-					warn "Printing comment to $comments_file_parsed\n";
-					open my $fh, '>>', $comments_file_parsed;
-					print $fh $possible_timestamps[$index]->{text};
-					close $fh;
-				}
-			}
-		}
 	}
 }
 
@@ -329,12 +417,13 @@ sub parse_vtt {
 			$line !~ m#^Kind: captions$# &&
 			$line !~ m#^Language: \w+$# &&
 			$line !~ /^\s*$/ && 
-			$line !~ m#^\d{2}:\d{2}:\d{2}\.\d{3}\s*-->\s*\d{2}:\d{2}:\d{2}\.\d{3}\s*align:start position:0%$# &&
+			$line !~ m#^\d{2}:\d{2}:\d{2}\.\d{3}\s*-->\s*\d{2}:\d{2}:\d{2}\.\d{3}\s*(?:align:start position:0%)?$# &&
 			$line ne get_last_line($contents)
 		) {
 			$contents .= "$line\n";
 		} elsif (
-			$line =~ m#^(\d{2}):(\d{2}):\d{2}\.\d{3}\s*-->\s*\d{2}:\d{2}:\d{2}\.\d{3}\s*align:start position:0%$#
+			# 00:00:00.020 --> 00:00:07.080
+			$line =~ m#^(\d{2}):(\d{2}):\d{2}\.\d{3}\s*-->\s*\d{2}:\d{2}:\d{2}\.\d{3}\s*(?:align:start position:0%)?$#
 		) {
 			my ($this_hour, $this_minute) = ($1, $2);
 
@@ -445,6 +534,8 @@ sub analyze_args {
 	foreach (@_) {
 		if(m#^--debug$#) {
 			$options{debug} = 1;
+		} elsif(m#^--repair$#) {
+			$options{repair} = 1;
 		} elsif(m#^--path=(.*)$#) {
 			$options{path} = $1;
 		} elsif(m#^--nocomments$#) {
