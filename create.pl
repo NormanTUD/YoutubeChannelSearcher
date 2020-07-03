@@ -56,12 +56,15 @@ sub main {
 		mywarn "No --parameter or --repair option given, not downloading any videos";
 	}
 
-	if(-e "$options{path}/dl") {
-		rmtree("$options{path}/dl");
+	my $dl = "$options{path}/dl";
+	if(-e $dl) {
+		debug "Deleting $dl";
+		rmtree($dl);
 	}
 }
 
 sub get_defect_files {
+	debug "get_defect_files()";
 	my @defect = ();
 	my $results = "$options{path}/results/";
 	if(-d $results) {
@@ -84,6 +87,7 @@ sub get_defect_files {
 
 sub get_timestamp_comments {
 	my ($comments, $id, $comments_file) = @_; 
+	debug "get_timestamp_comments($comments, $id, $comments_file)";
 	my $comments_file_parsed  = "$comments/".$id."_0.json";
 	if(!-e $comments_file_parsed && -e $comments_file && -e $comments_file) {
 		my @possible_timestamps = ();
@@ -132,6 +136,7 @@ sub get_timestamp_comments {
 
 sub download_comments {
 	my ($comments_file, $id) = @_;
+	debug "download_comments($comments_file, $id)";
 	if(-e $comments_file) {
 		mywarn "$comments_file already exists";
 	} elsif ($options{comments}) {
@@ -145,6 +150,7 @@ sub download_comments {
 
 sub download_duration {
 	my ($duration_file, $id) = @_;
+	debug "download_duration($duration_file, $id)";
 	if(-e $duration_file) {
 		mywarn "$duration_file already exists";
 	} else {
@@ -159,6 +165,7 @@ sub download_duration {
 
 sub download_description {
 	my ($desc_file, $id) = @_;
+	debug "download_description($desc_file, $id)";
 	if(-e $desc_file) {
 		mywarn "$desc_file already exists";
 	} else {
@@ -173,6 +180,7 @@ sub download_description {
 
 sub download_title {
 	my ($title_file, $id) = @_;
+	debug "download_title($title_file, $id)";
 	if(-e $title_file) {
 		mywarn "$title_file already exists";
 	} else {
@@ -188,6 +196,7 @@ sub download_title {
 
 sub download_text {
 	my ($results_id, $dl, $id) = @_;
+	debug "download_text($results_id, $dl, $id)";
 	if (-f $results_id) {
 		mywarn "$results_id already downloaded";
 	} else {
@@ -312,6 +321,7 @@ sub download_data {
 
 sub clean_text {
 	my $text = shift;
+	debug "clean_text(...)";
 	my $cleaned = $text;
 
 	$cleaned =~ s/\s+(?<![\r\n])/ /gs;
@@ -330,6 +340,7 @@ sub clean_text {
 
 sub read_file {
 	my $filename = shift;
+	debug "read_file($filename)";
 	if (!-e $filename) {
 		return undef;
 	} else {
@@ -612,8 +623,9 @@ sub write_file {
 }
 
 sub uniq {
-    my %seen;
-    grep !$seen{$_}++, @_;
+	debug "uniq(...)";
+	my %seen;
+	grep !$seen{$_}++, @_;
 }
 
 __DATA__
