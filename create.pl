@@ -142,7 +142,7 @@ sub download_comments {
 	if(-e $comments_file) {
 		mywarn "$comments_file already exists";
 	} elsif ($options{comments}) {
-		my $command = qq#cd comments; python2.7 downloader.py --output "$comments_file" --youtubeid -- "$id"; cd -#;
+		my $command = qq#cd comments; python2.7 downloader.py --output "$comments_file" --youtubeid "$id"; cd -#;
 		debug $command;
 		system($command);
 	} else {
@@ -265,7 +265,6 @@ sub download_data {
 
 	my @ids = ();
 
-
 	if($start) {
 		if($start =~ m#list#) {
 			push @ids, dl_playlist($start);
@@ -285,7 +284,6 @@ sub download_data {
 	if($options{random}) {
 		@ids = sort { rand() <=> rand() } @ids;
 	}
-
 
 	foreach my $id (@ids) { ### Working===[%]     done
 		mywarn "\n"; # for smart comments
