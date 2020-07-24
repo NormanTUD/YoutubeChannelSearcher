@@ -980,6 +980,7 @@ ini_set('display_errors', 1);
 			$this->set_matches($matches);
 			$this->set_result($result);
 			$this->set_timestamp_from_result();
+			$this->set_timestamp_comments();
 			$this->set_stichwort($stichwort);
 			$this->set_textfile();
 		}
@@ -1001,10 +1002,13 @@ ini_set('display_errors', 1);
 					$mark = '';
 					$markend = '';
 
-					if($GLOBALS['timestamp'] && !$GLOBALS['marked_time'] && $time_seconds > $GLOBALS['timestamp']) {
-						$mark = '<span style="color: red">';
-						$markend = "</span>";
-						$GLOBALS['marked_time'] = 1;
+					if(0 && $GLOBALS['timestamp'] && !$GLOBALS['marked_time']) {
+						#print $time_seconds." >= ".$GLOBALS['timestamp']."<br>\n";
+						if($time_seconds >= $GLOBALS['timestamp']) {
+							$mark = '<span style="color: red">';
+							$markend = "</span>";
+							$GLOBALS['marked_time'] = 1;
+						}
 					}
 
 					return "<a href='https://www.youtube.com/watch?v=".$this->get_youtube_id()."&t=$time_seconds'>$mark$original$markend</a>";
@@ -1081,7 +1085,6 @@ ini_set('display_errors', 1);
 			$this->set_title();
 			$this->set_duration();
 			$this->set_desc();
-			$this->set_timestamp_comments();
 		}
 		function get_youtube_id () { return $this->youtube_id; }
 
@@ -1105,6 +1108,7 @@ ini_set('display_errors', 1);
 				$this->set_timestamp_human($matches[1]);
 				$this->set_timestamp($matches[2]);
 			}
+#dier($this);
 		}
 
 
