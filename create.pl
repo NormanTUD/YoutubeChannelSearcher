@@ -855,8 +855,7 @@ ini_set('display_errors', 1);
 			$str = '';
 			while(!feof($fn)) {
 				$result = fgets($fn);
-				$result = strtolower($result);
-				if(preg_match_all("/.*$stichwort.*/", $result, $matches, PREG_SET_ORDER)) {
+				if(preg_match_all("/.*$stichwort.*/i", $result, $matches, PREG_SET_ORDER)) {
 					$this_finds[] = new searchResult($id, $matches, $result, $stichwort);
 				}
 				$str = $str.$result;
@@ -871,69 +870,8 @@ ini_set('display_errors', 1);
 		}
 	}
 
-	function get_timestamps_string ($id) {
-		$timestamps_array = get_timestamp_data($id);
 
-		$timestamps = '';
-		if(count($timestamps_array) > 1) {
-			$timestamps .= '<div class="tab">';
-			for ($n = 0; $n < count($timestamps_array); $n++) {
-				$timestamps .= '<button class="tablinks" onclick="openComment(event, \''.$id.'_'.$i.'_'.$n.'\', \''.$id.'_'.$i.'\')">'.($n + 1).'</button>';
-			}
-			$timestamps .= '</div>';
-			for ($n = 0; $n < count($timestamps_array); $n++) {
-				$style = '';
-				if($n == 0) {
-					$style = " style='display: block !important;' ";
-				} else {
-					$style = " style='display: none !important;' ";
-				}
-				$timestamps .= '<div '.$style.' id="'.$id.'_'.$i.'_'.$n.'" class="tabcontent_'.$id.'_'.$i.'">';
-				$timestamps .= $timestamps_array[$n];
-				$timestamps .= '</div>';
-			}
-		} else if (count($timestamps_array) == 1) {
-			$timestamps = $timestamps_array[0];
-		}
-		return $timestamps;
-	}
 
-	function replace_seconds_timestamp_with_youtube_link ($id, $content) {
-		return preg_replace_callback(
-			"/((?:\d{1,2}:)?\d{1,2}:\d{2})/", function ($match) use ($id) {
-				$original = $match[0];
-
-				$str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $original);
-				sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-				$time_seconds = $hours * 3600 + $minutes * 60 + $seconds;
-
-				return "<a href='https://www.youtube.com/watch?v=$id&t=$time_seconds'>$original</a>";
-			}, 
-			$content
-		);
-	}
-
-	function get_timestamp_data ($id) {
-		$timestamps_array = array();
-		$this_timestamp_file = "./comments/".$id."_0.json";
-		$n = 0;
-		while (file_exists($this_timestamp_file)) {
-			$content = nl2br(file_get_contents($this_timestamp_file));
-			$timestamps_array[] = replace_seconds_timestamp_with_youtube_link($id, $content);
-			$n++;
-			$this_timestamp_file = "./comments/".$id."_".$n.".json";
-		}
-		return $timestamps_array;
-	}
-
-	function get_desc ($id) {
-		$desc_file = "desc/".$id."_TITLE.txt";
-		$desc = '<i>Keine Beschreibung</i>';
-		if(file_exists($desc_file)) {
-			$desc = "<a href='./$desc_file'>Desc</a>";
-		}
-		return $desc;
-	}
 
 	function get_table ($finds) {
 		$anzahl = count($finds);
@@ -962,7 +900,7 @@ ini_set('display_errors', 1);
 						$table .= "<td>".$this_find->get_desc().", ".$this_find->get_textfile()."</td>\n";
 						$table .= "<td>".$this_find->get_title()."</td>\n";
 						$table .= "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$".$this_find->get_youtube_id()."'>".$this_find->get_youtube_id()."</a></span></td>\n";
-						$table .= "<td><span style='font-size: 9;'>".$this_find->get_timestamps()."</span></td>\n";
+						$table .= "<td><span style='font-size: 9;'>".$this_find->get_timestamp_comments()."</span></td>\n";
 						$table .= "<td>$string</td></tr>\n";
 					}
 					$i++;
@@ -974,14 +912,6 @@ ini_set('display_errors', 1);
 		return $table;
 	}
 
-	function get_duration ($id) {
-		$duration_file = "durations/".$id."_TITLE.txt";
-		$duration = '<i>Unbekannte Länge</i>';
-		if(file_exists($duration_file)) {
-			$duration = file_get_contents($duration_file);
-		}
-		return $duration;
-	}
 
 	function show_entry ($id) {
 		if((array_key_exists('hastimecomment', $_GET) && timestamp_file_exists($id)) || !array_key_exists('hastimecomment', $_GET)) {
@@ -991,14 +921,6 @@ ini_set('display_errors', 1);
 		}
 	}
 
-	function get_title ($id) {
-		$title = NULL;
-		$title_file = "titles/".$id."_TITLE.txt";
-		if(file_exists($title_file)) {
-			$title = file_get_contents($title_file);
-		}
-		return $title;
-	}
 
 	function get_all_files ($handle) {
 		$files = array();
@@ -1024,7 +946,7 @@ ini_set('display_errors', 1);
 				$stichwort = strtolower($stichwort);
 
 				$finds = array_merge($finds, find_matches_in_main_text($stichwort, $id));
-				$comment_finds = array_merge($comment_finds, find_matches_in_comments($stichwort, $id)); # TODO irgendwie anzeigen!!!
+				#$comment_finds = array_merge($comment_finds, find_matches_in_comments($stichwort, $id)); # TODO irgendwie anzeigen!!!
 
 				$thistime = time();
 				if($thistime - $starttime > $timeouttime) {
@@ -1046,30 +968,124 @@ ini_set('display_errors', 1);
 		public $title = '<i>Kein Titel</i>';
 		public $duration;
 		public $desc;
-		public $timestamps = '<i>&mdash;</i>';
+		public $timestamp_comments = '<i>&mdash;</i>';
 		public $matches;
 		public $result;
 		public $textfile;
 		public $stichwort;
+		public $string;
 
 		function __construct($id, $matches, $result, $stichwort) {
 			$this->set_youtube_id($id);
 			$this->set_matches($matches);
 			$this->set_result($result);
+			$this->set_timestamp_from_result();
 			$this->set_stichwort($stichwort);
+			$this->set_textfile();
+		}
+
+		function replace_seconds_timestamp_with_youtube_link ($content) {
+			$id = $this->get_youtube_id();
+			$this_object = $this;
+			$GLOBALS['marked_time'] = 0;
+			$GLOBALS['timestamp'] = $this->get_timestamp();
+
+			$new_data = preg_replace_callback(
+				"/((?:\d{1,2}:)?\d{1,2}:\d{2})/", function ($match) use ($id) {
+					$original = $match[0];
+
+					$str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $original);
+					sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
+					$time_seconds = $hours * 3600 + $minutes * 60 + $seconds;
+
+					$mark = '';
+					$markend = '';
+
+					if($GLOBALS['timestamp'] && !$GLOBALS['marked_time'] && $time_seconds > $GLOBALS['timestamp']) {
+						$mark = '<span style="color: red">';
+						$markend = "</span>";
+						$GLOBALS['marked_time'] = 1;
+					}
+
+					return "<a href='https://www.youtube.com/watch?v=".$this->get_youtube_id()."&t=$time_seconds'>$mark$original$markend</a>";
+				}, 
+				$content
+			);
+			$GLOBALS['marked_time'] = 0;
+			$GLOBALS['timestamp'] = Null;
+			return $new_data;
+		}
+
+		function get_timestamp_comments_data () {
+			$timestamps_array = array();
+			$this_timestamp_file = "./comments/".$this->get_youtube_id()."_0.json";
+			$n = 0;
+			while (file_exists($this_timestamp_file)) {
+				$content = nl2br(file_get_contents($this_timestamp_file));
+				$timestamps_array[] = $this->replace_seconds_timestamp_with_youtube_link($content);
+				$n++;
+				$this_timestamp_file = "./comments/".$this->get_youtube_id()."_".$n.".json";
+			}
+			return $timestamps_array;
+		}
+
+		function get_timestamp_comments_string () {
+			$timestamps_array = $this->get_timestamp_comments_data();
+
+			$timestamps = '';
+			if(count($timestamps_array) > 1) {
+				$timestamps .= '<div class="tab">';
+				for ($n = 0; $n < count($timestamps_array); $n++) {
+					$timestamps .= '<button class="tablinks" onclick="openComment(event, \''.$this->get_youtube_id().'_'.$i.'_'.$n.'\', \''.$this->get_youtube_id().'_'.$i.'\')">'.($n + 1).'</button>';
+				}
+				$timestamps .= '</div>';
+				for ($n = 0; $n < count($timestamps_array); $n++) {
+					$style = '';
+					if($n == 0) {
+						$style = " style='display: block !important;' ";
+					} else {
+						$style = " style='display: none !important;' ";
+					}
+					$timestamps .= '<div '.$style.' id="'.$this->get_youtube_id().'_'.$i.'_'.$n.'" class="tabcontent_'.$this->get_youtube_id().'_'.$i.'">';
+					$timestamps .= $timestamps_array[$n];
+					$timestamps .= '</div>';
+				}
+			} else if (count($timestamps_array) == 1) {
+				$timestamps = $timestamps_array[0];
+			}
+			return $timestamps;
+		}
+
+
+		function get_title_from_file () {
+			$title = NULL;
+			$title_file = "titles/".$this->get_youtube_id()."_TITLE.txt";
+			if(file_exists($title_file)) {
+				$title = file_get_contents($title_file);
+			}
+			return $title;
+		}
+
+		function get_desc_from_file () {
+			$desc_file = "desc/".$this->get_youtube_id()."_TITLE.txt";
+			$desc = '<i>Keine Beschreibung</i>';
+			if(file_exists($desc_file)) {
+				$desc = "<a href='./$desc_file'>Desc</a>";
+			}
+			return $desc;
 		}
 
 		function set_youtube_id ($value) { 
 			$this->youtube_id = $value;
-			$this->set_textfile($this->youtube_id);
-			$this->set_title(get_title($this->youtube_id));
-			$this->set_duration(get_duration($this->youtube_id));
-			$this->set_desc(get_desc($this->youtube_id));
-			$this->set_timestamps(get_timestamps_string($this->youtube_id));
+			$this->set_textfile();
+			$this->set_title();
+			$this->set_duration();
+			$this->set_desc();
+			$this->set_timestamp_comments();
 		}
 		function get_youtube_id () { return $this->youtube_id; }
 
-		function set_textfile ($id) { $textfile = "<a href='./results/$id.txt'>Text</a>"; if(file_exists($textfile)) { $self->textfile = $textfile; } }
+		function set_textfile () { $file = "<a href='./results/".$this->get_youtube_id().".txt'>Text</a>"; if(file_exists($file)) { $this->textfile = $file; } }
 		function get_textfile () { return $this->textfile; }
 
 		function set_timestamp_human ($value) { $this->timestamp_human = $value; }
@@ -1078,20 +1094,50 @@ ini_set('display_errors', 1);
 		function set_timestamp ($value) { $this->timestamp = $value; }
 		function get_timestamp () { return $this->timestamp; }
 
+		function set_timestamp_from_result () {
+			$ts_human = Null;
+			$ts = Null;
+
+			$id = $this->get_youtube_id();
+			$result = $this->get_result();
+
+			if(preg_match('/^\[((?:\d+:)?\d+:\d+) -> https:\/\/www.youtube.com\/watch\?v='.$id.'&t=(\d+)\]/', $result, $matches)) {
+				$this->set_timestamp_human($matches[1]);
+				$this->set_timestamp($matches[2]);
+			}
+		}
+
+
 		function set_text ($value) { $this->text = $value; }
 		function get_text () { return $this->text; }
 
-		function set_title ($value) { $this->title = $value; }
+		function set_title () {
+			$value = $this->get_title_from_file();
+			$value = str_replace(array("\n", "\r"), '', $value);       
+			$this->title = $value;
+		}
 		function get_title () { return $this->title; }
 
-		function set_duration ($value) { $this->duration = $value; }
+		function get_duration_from_file() {
+			$duration_file = "durations/".$this->get_youtube_id()."_TITLE.txt";
+			$duration = '<i>Unbekannte Länge</i>';
+			if(file_exists($duration_file)) {
+				$duration = file_get_contents($duration_file);
+			}
+			return $duration;
+		}
+		function set_duration () {
+			$value = $this->get_duration_from_file();
+			$value = str_replace(array("\n", "\r"), '', $value);       
+			$this->duration = $value;
+		}
 		function get_duration () { return $this->duration; }
 
-		function set_desc ($value) { $this->desc = $value; }
+		function set_desc () { $this->desc = $this->get_desc_from_file(); }
 		function get_desc () { return $this->desc; }
 
-		function set_timestamps ($value) { $this->timestamps = $value; }
-		function get_timestamps () { return $this->timestamps; }
+		function set_timestamp_comments () { $this->timestamp_comments = $this->get_timestamp_comments_string(); }
+		function get_timestamp_comments () { return $this->timestamp_comments; }
 
 		function set_matches ($value) { $this->matches = $value; }
 		function get_matches () { return $this->matches; }
@@ -1101,6 +1147,10 @@ ini_set('display_errors', 1);
 
 		function set_stichwort ($value) { $this->stichwort = $value; }
 		function get_stichwort () { return $this->stichwort; }
+
+		function set_string ($value) { $this->string = $value; }
+		function get_string () { return $this->string; }
+
 	}
 
 	$suchworte = array();
