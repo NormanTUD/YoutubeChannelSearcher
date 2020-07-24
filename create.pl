@@ -897,7 +897,7 @@ ini_set('display_errors', 1);
 						$table .= "<tr class='tr_".($i % 2)."'>\n";
 						$table .= "<td>$i</td>\n";
 						$table .= "<td>".$this_find->get_duration()."</td>\n";
-						$table .= "<td>".$this_find->get_desc().", ".$this_find->get_textfile()."</td>\n";
+						$table .= "<td>".$this_find->get_desc().", ".$this_find->get_textfile_link()."</td>\n";
 						$table .= "<td>".$this_find->get_title()."</td>\n";
 						$table .= "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$".$this_find->get_youtube_id()."'>".$this_find->get_youtube_id()."</a></span></td>\n";
 						$table .= "<td><span style='font-size: 9;'>".$this_find->get_timestamp_comments()."</span></td>\n";
@@ -998,13 +998,14 @@ ini_set('display_errors', 1);
 					$str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $original);
 					sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
 					$time_seconds = $hours * 3600 + $minutes * 60 + $seconds;
+					$time_without_seconds = $hours * 3600 + $minutes * 60;
 
 					$mark = '';
 					$markend = '';
 
 					if(0 && $GLOBALS['timestamp'] && !$GLOBALS['marked_time']) {
-						#print $time_seconds." >= ".$GLOBALS['timestamp']."<br>\n";
-						if($time_seconds >= $GLOBALS['timestamp']) {
+						print $time_seconds." >= ".$GLOBALS['timestamp']."<br>\n";
+						if($time_without_seconds >= $GLOBALS['timestamp']) {
 							$mark = '<span style="color: red">';
 							$markend = "</span>";
 							$GLOBALS['marked_time'] = 1;
@@ -1088,7 +1089,11 @@ ini_set('display_errors', 1);
 		}
 		function get_youtube_id () { return $this->youtube_id; }
 
-		function set_textfile () { $file = "<a href='./results/".$this->get_youtube_id().".txt'>Text</a>"; if(file_exists($file)) { $this->textfile = $file; } }
+		function get_textfile_link() {
+			$file = "<a href='./results/".$this->get_youtube_id().".txt'>Text</a>";
+			return $file;
+		}
+		function set_textfile () { $file = "./results/".$this->get_youtube_id().".txt"; if(file_exists($file)) { $this->textfile = $file; } }
 		function get_textfile () { return $this->textfile; }
 
 		function set_timestamp_human ($value) { $this->timestamp_human = $value; }
