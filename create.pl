@@ -10,6 +10,7 @@ use Digest::MD5 qw/md5_hex/;
 use Smart::Comments;
 use JSON::Parse 'parse_json';
 use File::Path;
+use UI::Dialog;
 
 my %options = (
 	debug => 0,
@@ -24,6 +25,12 @@ my %options = (
 );
 
 analyze_args(@ARGV);
+
+sub message (@) {
+	foreach (@_) {
+		warn color("green").$_.color("reset")."\n";
+	}
+}
 
 sub mywarn (@) {
 	foreach (@_) {
@@ -42,6 +49,45 @@ main();
 
 sub main {
 	debug "main()";
+
+	my $d = new UI::Dialog( title => 'Name of the Search', backtitle => 'Name of the search',
+		width => 65, height => 20, listheight => 5,
+		order => [ 'whiptail', 'dialog' ] );
+
+	if(!defined $options{name}) {
+		$options{name} = $d->inputbox(
+			text => 'Enter the Name...',
+			entry => ''
+		);
+	}
+
+	if(!defined $options{parameter}) {
+		$options{parameter} = $d->inputbox(
+			text => 'Enter the URL...',
+			entry => ''
+		);
+	}
+
+	if(!defined $options{path}) {
+		$options{path} = $d->inputbox(
+			text => 'Enter the Path...',
+			entry => ''
+		);
+	}
+
+	if(!defined $options{lang}) {
+		$options{lang} = $d->inputbox(
+			text => 'Enter two letter language code (de, en, ...)...',
+			entry => ''
+		);
+	}
+
+	my @run_strings = ();
+	for my $key (qw/lang parameter titleregex path name/) {
+		push @run_strings, qq#--$key="$options{$key}"#;
+	}
+
+	message "perl create.pl ".join(' ', @run_strings);;
 	
 	if($options{path}) {
 		make_path($options{path});
@@ -517,11 +563,15 @@ Example command:
 perl create.pl --path=/var/www/domian --name="Domian-Suche" --parameter=https://www.youtube.com/watch\?v\=BRe8VCqepgQ\&list\=PLQ9CsdXRvhNcSiQB-OSbfkiBbwX2E8ICP
 
 --help													This help
+--nocomments												Disables comment downloader
 --lang=de												Set language of the transcripts (default: de)
 --debug													Enables debug output
 --path=/path/												Path where the index.php and results should be stored
 --name="Name"												Name of the search
 --parameter=https://www.youtube.com/watch?v=07s3E2Gcvcs&list=PLQ9CsdXRvhNdqpNCs-Fsy4NSIQnWfsYiM		Youtube link (playlist or single video or channel) that should be downloaded
+--titleregex="a.*b"											Only download videos in which's titles the regex matches
+--repair												Repairs a repository
+--random												Shuffles order of downloading randomly	
 EOL
 
 	exit $exit_code;
@@ -715,6 +765,344 @@ __DATA__
 </form>
 
 <?php
+
+$GLOBALS['php_start'] = time();
+error_reporting(E_ALL);
+set_error_handler(function ($severity, $message, $file, $line) {
+    throw new \ErrorException($message, $severity, $severity, $file, $line);
+});
+
+ini_set('display_errors', 1);
+
+	function dier ($data, $enable_html = 0, $die = 1) {
+		$debug_backtrace = debug_backtrace();
+		$source_data = $debug_backtrace[0];
+
+		$source = '';
+
+		if(array_key_exists(1, $debug_backtrace) && array_key_exists('file', $debug_backtrace[1])) {
+			@$source .= 'Aufgerufen von <b>'.$debug_backtrace[1]['file'].'</b>::<i>';
+		}
+		
+		if(array_key_exists(1, $debug_backtrace) && array_key_exists('function', $debug_backtrace[1])) {
+			@$source .= $debug_backtrace[1]['function'];
+		}
+
+
+		@$source .= '</i>, line '.htmlentities($source_data['line'])."<br />\n";
+
+		print "<pre>\n";
+		ob_start();
+		print_r($data);
+		$buffer = ob_get_clean();
+		if($enable_html) {
+			print $buffer;
+		} else {
+			print htmlentities($buffer);
+		}
+		print "</pre>\n";
+		print "Backtrace:\n";
+		print "<pre>\n";
+		foreach ($debug_backtrace as $trace) {
+			print htmlentities(sprintf("\n%s:%s %s", $trace['file'], $trace['line'], $trace['function']));
+		}
+		print "</pre>\n";
+		exit();
+	}
+
+	function find_matches_in_comments ($stichwort, $id) {
+		$this_finds = array();
+		if(file_exists("./comments/".$id."_0.json")) {
+			$fn = fopen("./comments/".$id."_0.json", "r");
+
+			while(!feof($fn))  {
+				$result = fgets($fn);
+				$result = strtolower($result);
+				if(preg_match_all("/.*$stichwort.*/", $result, $matches, PREG_SET_ORDER)) {
+					$this_finds[] = array("matches" => $matches, "id" => $id);
+				}
+			}
+
+			fclose($fn);
+		}
+		return $this_finds;
+	}
+
+	function link_url ($string) {
+		$url = '~(?:(https?)://([^\s<]+)|(www\.[^\s<]+?\.[^\s<]+))(?<![\.,:])\d+~i';
+		$string = preg_replace($url, '<a href="$0" target="_blank" title="$0">$0</a>', $string);
+		return $string;
+	}
+
+	function mark_results ($stichwort, $string) {
+		$string = preg_replace("/($stichwort)/", "<span class='find'>$0</span>", $string);
+		return $string;
+	}
+
+	function timestamp_file_exists ($id) {
+		if(file_exists("./comments/".$id."_0.json")) {
+			return True;
+		} else {
+			return False;
+		}
+	}
+
+	function find_matches_in_main_text ($stichwort, $id) {
+		if(show_entry($id)) {
+			$this_finds = array();
+			$fn = fopen("./results/$id.txt", "r");
+
+			$str = '';
+			while(!feof($fn)) {
+				$result = fgets($fn);
+				$result = strtolower($result);
+				if(preg_match_all("/.*$stichwort.*/", $result, $matches, PREG_SET_ORDER)) {
+					$this_finds[] = new searchResult($id, $matches, $result, $stichwort);
+				}
+				$str = $str.$result;
+			}
+
+			fclose($fn);
+
+
+			return $this_finds;
+		} else {
+			return array();
+		}
+	}
+
+	function get_timestamps_string ($id) {
+		$timestamps_array = get_timestamp_data($id);
+
+		$timestamps = '';
+		if(count($timestamps_array) > 1) {
+			$timestamps .= '<div class="tab">';
+			for ($n = 0; $n < count($timestamps_array); $n++) {
+				$timestamps .= '<button class="tablinks" onclick="openComment(event, \''.$id.'_'.$i.'_'.$n.'\', \''.$id.'_'.$i.'\')">'.($n + 1).'</button>';
+			}
+			$timestamps .= '</div>';
+			for ($n = 0; $n < count($timestamps_array); $n++) {
+				$style = '';
+				if($n == 0) {
+					$style = " style='display: block !important;' ";
+				} else {
+					$style = " style='display: none !important;' ";
+				}
+				$timestamps .= '<div '.$style.' id="'.$id.'_'.$i.'_'.$n.'" class="tabcontent_'.$id.'_'.$i.'">';
+				$timestamps .= $timestamps_array[$n];
+				$timestamps .= '</div>';
+			}
+		} else if (count($timestamps_array) == 1) {
+			$timestamps = $timestamps_array[0];
+		}
+		return $timestamps;
+	}
+
+	function replace_seconds_timestamp_with_youtube_link ($id, $content) {
+		return preg_replace_callback(
+			"/((?:\d{1,2}:)?\d{1,2}:\d{2})/", function ($match) use ($id) {
+				$original = $match[0];
+
+				$str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $original);
+				sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
+				$time_seconds = $hours * 3600 + $minutes * 60 + $seconds;
+
+				return "<a href='https://www.youtube.com/watch?v=$id&t=$time_seconds'>$original</a>";
+			}, 
+			$content
+		);
+	}
+
+	function get_timestamp_data ($id) {
+		$timestamps_array = array();
+		$this_timestamp_file = "./comments/".$id."_0.json";
+		$n = 0;
+		while (file_exists($this_timestamp_file)) {
+			$content = nl2br(file_get_contents($this_timestamp_file));
+			$timestamps_array[] = replace_seconds_timestamp_with_youtube_link($id, $content);
+			$n++;
+			$this_timestamp_file = "./comments/".$id."_".$n.".json";
+		}
+		return $timestamps_array;
+	}
+
+	function get_desc ($id) {
+		$desc_file = "desc/".$id."_TITLE.txt";
+		$desc = '<i>Keine Beschreibung</i>';
+		if(file_exists($desc_file)) {
+			$desc = "<a href='./$desc_file'>Desc</a>";
+		}
+		return $desc;
+	}
+
+	function get_table ($finds) {
+		$anzahl = count($finds);
+		$table = "Anzahl Ergebnisse: $anzahl<br />\n";
+		$table .= "<table>\n";
+		$table .= "<tr>\n";
+		$table .= "<th>Nr.</th>\n";
+		$table .= "<th>Dauer</th>\n";
+		$table .= "<th>Desc<br/>Text</th>\n";
+		$table .= "<th>Titel</th>\n";
+		$table .= "<th>ID</th>\n";
+		$table .= "<th>Timestamp-Kommentare</th>\n";
+		$table .= "<th>Match</th>\n";
+		$table .= "</tr>\n";
+		$i = 1;
+		foreach ($finds as $this_find_key => $this_find) {
+			if(array_key_exists('matches', $this_find)) {
+				if(show_entry($this_find->get_youtube_id())) {
+					foreach ($this_find->get_matches() as $this_find_key2 => $this_find2) {
+						$string = $this_find2[0];
+						$string = link_url($string);
+						$string = mark_results($this_find->stichwort, $string);
+						$table .= "<tr class='tr_".($i % 2)."'>\n";
+						$table .= "<td>$i</td>\n";
+						$table .= "<td>".$this_find->get_duration()."</td>\n";
+						$table .= "<td>".$this_find->get_desc().", ".$this_find->get_textfile()."</td>\n";
+						$table .= "<td>".$this_find->get_title()."</td>\n";
+						$table .= "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$".$this_find->get_youtube_id()."'>".$this_find->get_youtube_id()."</a></span></td>\n";
+						$table .= "<td><span style='font-size: 9;'>".$this_find->get_timestamps()."</span></td>\n";
+						$table .= "<td>$string</td></tr>\n";
+					}
+					$i++;
+				}
+			}
+		}
+		$table .= "</table>\n";
+
+		return $table;
+	}
+
+	function get_duration ($id) {
+		$duration_file = "durations/".$id."_TITLE.txt";
+		$duration = '<i>Unbekannte Länge</i>';
+		if(file_exists($duration_file)) {
+			$duration = file_get_contents($duration_file);
+		}
+		return $duration;
+	}
+
+	function show_entry ($id) {
+		if((array_key_exists('hastimecomment', $_GET) && timestamp_file_exists($id)) || !array_key_exists('hastimecomment', $_GET)) {
+			return True;
+		} else {
+			return False;
+		}
+	}
+
+	function get_title ($id) {
+		$title = NULL;
+		$title_file = "titles/".$id."_TITLE.txt";
+		if(file_exists($title_file)) {
+			$title = file_get_contents($title_file);
+		}
+		return $title;
+	}
+
+	function get_all_files ($handle) {
+		$files = array();
+		while (false !== ($entry = readdir($handle))) {
+			if(preg_match('/.*\.txt/', $entry)) {
+				$files[] = $entry;
+			}
+		}
+		closedir($handle);
+		return $files;
+	}
+
+	function search_all_files ($files, $suchworte, $timeouttime, $timeout) {
+		$finds = array();
+		$comment_finds = array();
+
+		foreach ($files as $key => $this_file) {
+			$id = $this_file;
+			$id = preg_replace('/\.txt$/', '', $id);
+
+			$starttime = time();
+			foreach ($suchworte as $key => $stichwort) {
+				$stichwort = strtolower($stichwort);
+
+				$finds = array_merge($finds, find_matches_in_main_text($stichwort, $id));
+				$comment_finds = array_merge($comment_finds, find_matches_in_comments($stichwort, $id)); # TODO irgendwie anzeigen!!!
+
+				$thistime = time();
+				if($thistime - $starttime > $timeouttime) {
+					$timeout = 1;
+					continue;
+				}
+				if ($timeout) {
+					continue;
+				}
+			}
+		}
+		return array($finds, $comment_finds, $timeout);
+	}
+
+	class searchResult {
+		public $youtube_id;
+		public $timestamp_human;
+		public $timestamp;
+		public $title = '<i>Kein Titel</i>';
+		public $duration;
+		public $desc;
+		public $timestamps = '<i>&mdash;</i>';
+		public $matches;
+		public $result;
+		public $textfile;
+		public $stichwort;
+
+		function __construct($id, $matches, $result, $stichwort) {
+			$this->set_youtube_id($id);
+			$this->set_matches($matches);
+			$this->set_result($result);
+			$this->set_stichwort($stichwort);
+		}
+
+		function set_youtube_id ($value) { 
+			$this->youtube_id = $value;
+			$this->set_textfile($this->youtube_id);
+			$this->set_title(get_title($this->youtube_id));
+			$this->set_duration(get_duration($this->youtube_id));
+			$this->set_desc(get_desc($this->youtube_id));
+			$this->set_timestamps(get_timestamps_string($this->youtube_id));
+		}
+		function get_youtube_id () { return $this->youtube_id; }
+
+		function set_textfile ($id) { $textfile = "<a href='./results/$id.txt'>Text</a>"; if(file_exists($textfile)) { $self->textfile = $textfile; } }
+		function get_textfile () { return $this->textfile; }
+
+		function set_timestamp_human ($value) { $this->timestamp_human = $value; }
+		function get_timestamp_human () { return $this->timestamp_human; }
+
+		function set_timestamp ($value) { $this->timestamp = $value; }
+		function get_timestamp () { return $this->timestamp; }
+
+		function set_text ($value) { $this->text = $value; }
+		function get_text () { return $this->text; }
+
+		function set_title ($value) { $this->title = $value; }
+		function get_title () { return $this->title; }
+
+		function set_duration ($value) { $this->duration = $value; }
+		function get_duration () { return $this->duration; }
+
+		function set_desc ($value) { $this->desc = $value; }
+		function get_desc () { return $this->desc; }
+
+		function set_timestamps ($value) { $this->timestamps = $value; }
+		function get_timestamps () { return $this->timestamps; }
+
+		function set_matches ($value) { $this->matches = $value; }
+		function get_matches () { return $this->matches; }
+
+		function set_result ($value) { $this->result = $value; }
+		function get_result () { return $this->result; }
+
+		function set_stichwort ($value) { $this->stichwort = $value; }
+		function get_stichwort () { return $this->stichwort; }
+	}
+
 	$suchworte = array();
 
 	foreach ($_GET as $key => $value) {
@@ -729,162 +1117,18 @@ __DATA__
 		$timeout = 0;
 		$timeouttime = 1;
 		if ($handle = opendir('./results/')) {
-			$files = array();
-			while (false !== ($entry = readdir($handle))) {
-				if(preg_match('/.*\.txt/', $entry)) {
-					$files[] = $entry;
-				}
-			}
-			closedir($handle);
+			$files = get_all_files($handle);
 
-			$finds = array();
-			foreach ($files as $key => $thisfile) {
-				$id = $thisfile;
-				$id = preg_replace('/\.txt$/', '', $id);
+			$finds_and_comments_and_timeout = search_all_files($files, $suchworte, $timeouttime, $timeout);
 
-				$starttime = time();
-				foreach ($suchworte as $key => $this_stichwort) {
-					$this_stichwort = strtolower($this_stichwort);
+			$finds = $finds_and_comments_and_timeout[0];
+			$comments = $finds_and_comments_and_timeout[1];
+			$timeout = $finds_and_comments_and_timeout[2];
 
-					$fn = fopen("./results/$thisfile", "r");
-
-					while(!feof($fn))  {
-						$result = fgets($fn);
-						if(preg_match_all("/.*$this_stichwort.*/", $result, $matches, PREG_SET_ORDER)) {
-							$finds[] = array("matches" => $matches, "id" => $id);
-						}
-					}
-
-					fclose($fn);
-
-					if(file_exists("./comments/".$id."_0.json")) {
-						$fn = fopen("./comments/".$id."_0.json", "r");
-
-						while(!feof($fn))  {
-							$result = fgets($fn);
-							if(preg_match_all("/.*$this_stichwort.*/", $result, $matches, PREG_SET_ORDER)) {
-								$finds[] = array("matches" => $matches, "id" => $id);
-							}
-						}
-
-						fclose($fn);
-					}
-
-					$thistime = time();
-					if($thistime - $starttime > $timeouttime) {
-						$timeout = 1;
-						continue;
-					}
-				}
-			}
 			if(!count($finds)) {
 				print("Keine Ergebnisse");
 			} else {
-				$url = '~(?:(https?)://([^\s<]+)|(www\.[^\s<]+?\.[^\s<]+))(?<![\.,:])\d+~i';
-				$anzahl = count($finds);
-				print "Anzahl Ergebnisse: $anzahl<br />\n";
-				print "<table>\n";
-				print "<tr>\n";
-				print "<th>Nr.</th>\n";
-				print "<th>Dauer</th>\n";
-				print "<th>Desc<br/>Text</th>\n";
-				print "<th>Titel</th>\n";
-				print "<th>ID</th>\n";
-				print "<th>Timestamp-Kommentare</th>\n";
-				print "<th>Match</th>\n";
-				print "</tr>\n";
-				$i = 1;
-				foreach ($finds as $this_find_key => $this_find) {
-					$matches = $this_find['matches'];
-					$id = $this_find['id'];
-					$title_file = "titles/".$id."_TITLE.txt";
-					$timestamp_file = "comments/".$id."_0.json";
-					$title = '<i>Kein Titel</i>';
-					$timestamps = '<i>&mdash;</i>';
-
-					if((array_key_exists('hastimecomment', $_GET) && file_exists($timestamp_file)) || !array_key_exists('hastimecomment', $_GET)) {
-						if(file_exists($title_file)) {
-							$title = file_get_contents($title_file);
-						}
-
-						if(file_exists($title_file)) {
-							$title = file_get_contents($title_file);
-						}
-
-						$duration_file = "durations/".$id."_TITLE.txt";
-						$duration = '<i>Unbekannte Länge</i>';
-						if(file_exists($duration_file)) {
-							$duration = file_get_contents($duration_file);
-						}
-
-						$desc_file = "desc/".$id."_TITLE.txt";
-						$desc = '<i>Keine Beschreibung</i>';
-						if(file_exists($desc_file)) {
-							$desc = "<a href='./$desc_file'>Desc</a>";
-						}
-
-						$timestamps_array = array();
-						$this_timestamp_file = "./comments/".$id."_0.json";
-						$n = 0;
-						while (file_exists($this_timestamp_file)) {
-							$timestamps_file = nl2br(file_get_contents($this_timestamp_file));
-							$timestamps_array[] = preg_replace_callback(
-								"/((?:\d{1,2}:)?\d{1,2}:\d{2})/", function ($match) use ($id) {
-									$original = $match[0];
-
-									$str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $original);
-									sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-									$time_seconds = $hours * 3600 + $minutes * 60 + $seconds;
-
-									return "<a href='https://www.youtube.com/watch?v=$id&t=$time_seconds'>$original</a>";
-								}, 
-								$timestamps_file
-							);
-							$n++;
-							$this_timestamp_file = "./comments/".$id."_".$n.".json";
-						}
-
-						if(count($timestamps_array) > 1) {
-							$timestamps = '';
-							$timestamps .= '<div class="tab">';
-							for ($n = 0; $n < count($timestamps_array); $n++) {
-								$timestamps .= '<button class="tablinks" onclick="openComment(event, \''.$id.'_'.$i.'_'.$n.'\', \''.$id.'_'.$i.'\')">'.($n + 1).'</button>';
-							}
-							$timestamps .= '</div>';
-							for ($n = 0; $n < count($timestamps_array); $n++) {
-								$style = '';
-								if($n == 0) {
-									$style = " style='display: block !important;' ";
-								} else {
-									$style = " style='display: none !important;' ";
-								}
-								$timestamps .= '<div '.$style.' id="'.$id.'_'.$i.'_'.$n.'" class="tabcontent_'.$id.'_'.$i.'">';
-								$timestamps .= $timestamps_array[$n];
-								$timestamps .= '</div>';
-							}
-						} else if (count($timestamps_array) == 1) {
-							$timestamps = $timestamps_array[0];
-						}
-
-						$textfile = "<a href='./results/$id.txt'>Text</a>";
-
-						foreach ($matches as  $this_find_key2 => $this_find2) {
-							$string = $this_find2[0];
-							$string = preg_replace($url, '<a href="$0" target="_blank" title="$0">$0</a>', $string);
-							$string = preg_replace("/($this_stichwort)/", "<span class='find'>$0</span>", $string);
-							print "<tr class='tr_".($i % 2)."'>\n";
-							print "<td>$i</td>\n";
-							print "<td>$duration</td>\n";
-							print "<td>$desc, $textfile</td>\n";
-							print "<td>$title</td>\n";
-							print "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$id'>$id</a></span></td>\n";
-							print "<td><span style='font-size: 9;'>$timestamps</span></td>\n";
-							print "<td>$string</td></tr>\n";
-						}
-						$i++;
-					}
-				}
-				print "</table>\n";
+				print get_table($finds);
 				if($timeout) {
 					print "Timeout ($timeouttime Sekunden) erreicht.";
 				}
