@@ -1028,7 +1028,6 @@ class searchResult {
 				$markend = '';
 
 				if(0 && $GLOBALS['timestamp'] && !$GLOBALS['marked_time']) {
-					print $time_seconds." >= ".$GLOBALS['timestamp']."<br>\n";
 					if($time_without_seconds >= $GLOBALS['timestamp']) {
 						$mark = '<span style="color: red">';
 						$markend = "</span>";
@@ -1036,7 +1035,7 @@ class searchResult {
 					}
 				}
 
-				return "<a href='https://www.youtube.com/watch?v=".$this->get_youtube_id()."&t=$time_seconds'>$mark$original$markend</a>";
+				return "<a href='https://www.youtube.com/watch?v=".$this->get_youtube_id()."&t=$time_seconds'>$mark$original ($time_seconds >= ".$GLOBALS['timestamp'].")$markend</a>";
 			}, 
 			$content
 		);
