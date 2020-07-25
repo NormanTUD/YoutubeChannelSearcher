@@ -788,7 +788,6 @@ function dier ($data, $enable_html = 0, $die = 1) {
 		@$source .= $debug_backtrace[1]['function'];
 	}
 
-
 	@$source .= '</i>, line '.htmlentities($source_data['line'])."<br />\n";
 
 	print "<pre>\n";
@@ -881,15 +880,11 @@ function find_matches_in_main_text ($stichwort, $id, $i) {
 
 		fclose($fn);
 
-
 		return $this_finds;
 	} else {
 		return array();
 	}
 }
-
-
-
 
 function print_table ($finds) {
 	$anzahl = count($finds);
@@ -918,7 +913,7 @@ function print_table ($finds) {
 					print "<td>".$this_find->get_desc().", ".$this_find->get_textfile_link()."</td>\n";
 					print "<td>".$this_find->get_title()."</td>\n";
 					print "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$".$this_find->get_youtube_id()."'>".$this_find->get_youtube_id()."</a></span></td>\n";
-					print "<td><span style='font-size: 10;'>".$this_find->get_timestamp_comments()."</span></td>\n";
+					print "<td><span style='font-size: 11;'>".$this_find->get_timestamp_comments()."</span></td>\n";
 					print "<td>$string</td></tr>\n";
 				}
 				$i++;
@@ -928,7 +923,6 @@ function print_table ($finds) {
 	print "</table>\n";
 }
 
-
 function show_entry ($id) {
 	if((array_key_exists('hastimecomment', $_GET) && timestamp_file_exists($id)) || !array_key_exists('hastimecomment', $_GET)) {
 		return True;
@@ -936,7 +930,6 @@ function show_entry ($id) {
 		return False;
 	}
 }
-
 
 function get_all_files ($handle) {
 	$files = array();
@@ -1085,7 +1078,6 @@ class searchResult {
 		return $timestamps;
 	}
 
-
 	function get_title_from_file () {
 		$title = NULL;
 		$title_file = "titles/".$this->get_youtube_id()."_TITLE.txt";
@@ -1137,9 +1129,7 @@ class searchResult {
 			$this->set_timestamp_human($matches[1]);
 			$this->set_timestamp($matches[2]);
 		}
-#dier($this);
 	}
-
 
 	function set_text ($value) { $this->text = $value; }
 	function get_text () { return $this->text; }
@@ -1183,7 +1173,6 @@ class searchResult {
 
 	function set_string ($value) { $this->string = $value; }
 	function get_string () { return $this->string; }
-
 
 	function set_i ($value) { $this->counter_i = $value; }
 	function get_i () { return $this->counter_i; }
