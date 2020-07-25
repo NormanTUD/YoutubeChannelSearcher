@@ -62,10 +62,12 @@ sub main {
 	}
 
 	if(!defined $options{parameter}) {
-		$options{parameter} = $d->inputbox(
-			text => 'Enter the URL...',
-			entry => ''
-		);
+		if(!$options{repair}) {
+			$options{parameter} = $d->inputbox(
+				text => 'Enter the URL...',
+				entry => ''
+			);
+		}
 	}
 
 	if(!defined $options{path}) {
@@ -83,8 +85,10 @@ sub main {
 	}
 
 	my @run_strings = ();
-	for my $key (qw/lang parameter titleregex path name/) {
-		push @run_strings, qq#--$key="$options{$key}"#;
+	for my $key (qw/lang parameter titleregex path name repair random debug/) {
+		if($options{$key}) {
+			push @run_strings, qq#--$key="$options{$key}"#;
+		}
 	}
 
 	message "perl create.pl ".join(' ', @run_strings);;
@@ -605,9 +609,9 @@ sub create_index_file {
 
 sub analyze_args {
 	foreach (@_) {
-		if(m#^--debug$#) {
+		if(m#^--debug(=\d+)?$#) {
 			$options{debug} = 1;
-		} elsif(m#^--repair$#) {
+		} elsif(m#^--repair(=\d+)?$#) {
 			$options{repair} = 1;
 		} elsif(m#^--titleregex=(.*)$#) {
 			$options{titleregex} = $1;
