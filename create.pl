@@ -107,6 +107,8 @@ sub main {
 		debug "Deleting $dl";
 		rmtree($dl);
 	}
+
+	message "perl create.pl ".join(' ', @run_strings);;
 }
 
 sub get_defect_files {
@@ -827,6 +829,24 @@ function find_matches_in_comments ($stichwort, $id, $i) {
 	return $this_finds;
 }
 
+function find_matches_in_desc ($stichwort, $id, $i) {
+	$this_finds = array();
+	if(file_exists("./desc/".$id."_TITLE.txt")) {
+		$fn = fopen("./desc/".$id."_TITLE.txt", "r");
+
+		while(!feof($fn))  {
+			$result = fgets($fn);
+			$result = strtolower($result);
+			if(preg_match_all("/.*$stichwort.*/", $result, $matches, PREG_SET_ORDER)) {
+				$this_finds[] = new searchResult($id, $matches, $result, $stichwort, $i);
+			}
+		}
+
+		fclose($fn);
+	}
+	return $this_finds;
+}
+
 function find_matches_in_titles ($stichwort, $id, $i) {
 	$this_finds = array();
 	if(file_exists("./titles/".$id."_TITLE.txt")) {
@@ -948,6 +968,7 @@ function get_all_files ($handle) {
 function search_all_files ($files, $suchworte, $timeouttime, $timeout) {
 	$finds = array();
 	$comment_finds = array();
+	$desc = array();
 	$titles = array();
 
 	foreach ($files as $key => $this_file) {
@@ -965,6 +986,8 @@ function search_all_files ($files, $suchworte, $timeouttime, $timeout) {
 			$i++;
 			$titles = array_merge($titles, find_matches_in_titles($stichwort, $id, $i));
 			$i++;
+			$desc = array_merge($desc, find_matches_in_desc($stichwort, $id, $i));
+			$i++;
 
 			$thistime = time();
 			if($thistime - $starttime > $timeouttime) {
@@ -976,7 +999,7 @@ function search_all_files ($files, $suchworte, $timeouttime, $timeout) {
 			}
 		}
 	}
-	return array($finds, $comment_finds, $titles, $timeout);
+	return array($finds, $comment_finds, $titles, $desc, $timeout);
 }
 
 class searchResult {
@@ -1194,23 +1217,28 @@ if(count($suchworte)) {
 	if ($handle = opendir('./results/')) {
 		$files = get_all_files($handle);
 
-		$finds_and_comments_and_title_timeout = search_all_files($files, $suchworte, $timeouttime, $timeout);
+		$finds_and_comments_and_title_and_desc_timeout = search_all_files($files, $suchworte, $timeouttime, $timeout);
 
-		$finds = $finds_and_comments_and_title_timeout[0];
-		$comments = $finds_and_comments_and_title_timeout[1];
-		$title = $finds_and_comments_and_title_timeout[2];
-		$timeout = $finds_and_comments_and_title_timeout[3];
+		$finds = $finds_and_comments_and_title_and_desc_timeout[0];
+		$comments = $finds_and_comments_and_title_and_desc_timeout[1];
+		$title = $finds_and_comments_and_title_and_desc_timeout[2];
+		$desc = $finds_and_comments_and_title_and_desc_timeout[3];
+		$timeout = $finds_and_comments_and_title_and_desc_timeout[4];
 
 		if(count($finds)) {
 			print "<a href='#text'>Text</a><br>";
 		}
 
 		if(count($comments)) {
-			print "<a href='#kommentare'>Kommentare</a><br>";
+			print "<a href='#kommentare'>Timestamp-Kommentare</a><br>";
 		}
 
 		if(count($title)) {
 			print "<a href='#titel'>Titel</a><br>";
+		}
+
+		if(count($desc)) {
+			print "<a href='#desc'>Beschreibungen</a><br>";
 		}
 
 		if(count($finds)) {
@@ -1219,13 +1247,18 @@ if(count($suchworte)) {
 		}
 
 		if(count($comments)) {
-			print "<h2 id='kommentare'>Kommentare</h2>";
+			print "<h2 id='kommentare'>Timestamp-Kommentare</h2>";
 			print_table($comments);
 		}
 
 		if(count($title)) {
 			print "<h2 id='titel'>Titel</h2>";
 			print_table($title, 1);
+		}
+
+		if(count($desc)) {
+			print "<h2 id='desc'>Beschreibungen</h2>";
+			print_table($desc, 1);
 		}
 
 		if($timeout) {
