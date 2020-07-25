@@ -819,7 +819,8 @@ ini_set('display_errors', 1);
 				$result = fgets($fn);
 				$result = strtolower($result);
 				if(preg_match_all("/.*$stichwort.*/", $result, $matches, PREG_SET_ORDER)) {
-					$this_finds[] = array("matches" => $matches, "id" => $id);
+					#$this_finds[] = array("matches" => $matches, "id" => $id);
+					$this_finds[] = new searchResult($id, $matches, $result, $stichwort);
 				}
 			}
 
@@ -946,7 +947,7 @@ ini_set('display_errors', 1);
 				$stichwort = strtolower($stichwort);
 
 				$finds = array_merge($finds, find_matches_in_main_text($stichwort, $id));
-				#$comment_finds = array_merge($comment_finds, find_matches_in_comments($stichwort, $id)); # TODO irgendwie anzeigen!!!
+				$comment_finds = array_merge($comment_finds, find_matches_in_comments($stichwort, $id));
 
 				$thistime = time();
 				if($thistime - $starttime > $timeouttime) {
@@ -1187,10 +1188,19 @@ ini_set('display_errors', 1);
 			if(!count($finds)) {
 				print("Keine Ergebnisse");
 			} else {
+				print "<h2>Text</h2>";
 				print get_table($finds);
-				if($timeout) {
-					print "Timeout ($timeouttime Sekunden) erreicht.";
-				}
+			}
+
+			if(!count($comments)) {
+				print("Keine Ergebnisse");
+			} else {
+				print "<h2>Kommentare</h2>";
+				print get_table($comments);
+			}
+
+			if($timeout) {
+				print "Timeout ($timeouttime Sekunden) erreicht.";
 			}
 		} else {
 			print "Dir ./results/ not found";
