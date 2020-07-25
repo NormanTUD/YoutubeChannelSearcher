@@ -680,88 +680,88 @@ sub uniq {
 
 __DATA__
 <head>
-	<title>SUCHENAME-Suche</title>
-	<style type="text/css">
-		table, th, td {
-			border: 1px solid black;
-		} 
-		.find {
-			background-color: orange;
-		}
+<title>SUCHENAME-Suche</title>
+<style type="text/css">
+	table, th, td {
+		border: 1px solid black;
+	} 
+	.find {
+		background-color: orange;
+	}
 
-		.tr_0 {
-			background-color: white;
-		}
+	.tr_0 {
+		background-color: white;
+	}
 
-		.tr_1 {
-			background-color: #ededed;
-		}
+	.tr_1 {
+		background-color: #ededed;
+	}
 
-		.tab {
-			overflow: hidden;
-			border: 1px solid #ccc;
-			background-color: #f1f1f1;
-		}
+	.tab {
+		overflow: hidden;
+		border: 1px solid #ccc;
+		background-color: #f1f1f1;
+	}
 
-		.tab button {
-			background-color: inherit;
-			float: left;
-			border: none;
-			outline: none;
-			cursor: pointer;
-			padding: 14px 16px;
-			transition: 0.3s;
-			font-size: 17px;
-		}
+	.tab button {
+		background-color: inherit;
+		float: left;
+		border: none;
+		outline: none;
+		cursor: pointer;
+		padding: 14px 16px;
+		transition: 0.3s;
+		font-size: 17px;
+	}
 
-		.tab button:hover {
-			background-color: #ddd;
-		}
+	.tab button:hover {
+		background-color: #ddd;
+	}
 
-		.tab button.active {
-			background-color: #ccc;
-		}
+	.tab button.active {
+		background-color: #ccc;
+	}
 
-		.tabcontent {
-			display: none;
-			padding: 6px 12px;
-			border: 1px solid #ccc;
-			border-top: none;
+	.tabcontent {
+		display: none;
+		padding: 6px 12px;
+		border: 1px solid #ccc;
+		border-top: none;
+	}
+</style>
+<script>
+	function openCommentNoMarking(idname, ytid) {
+		var i, tabcontent, tablinks;
+		tabcontent = document.getElementsByClassName("tabcontent_" + ytid);
+		for (i = 0; i < tabcontent.length; i++) {
+			tabcontent[i].style.display = "none";
 		}
-	</style>
-	<script>
-		function openCommentNoMarking(idname, ytid) {
-			var i, tabcontent, tablinks;
-			tabcontent = document.getElementsByClassName("tabcontent_" + ytid);
-			for (i = 0; i < tabcontent.length; i++) {
-				tabcontent[i].style.display = "none";
-			}
-			tablinks = document.getElementsByClassName("tablinks");
-			for (i = 0; i < tablinks.length; i++) {
-				tablinks[i].className = tablinks[i].className.replace(" active", "");
-			}
-			document.getElementById(idname).style.display = "block";
+		tablinks = document.getElementsByClassName("tablinks");
+		for (i = 0; i < tablinks.length; i++) {
+			tablinks[i].className = tablinks[i].className.replace(" active", "");
 		}
+		document.getElementById(idname).style.display = "block";
+	}
 
-		function openComment(evt, idname, ytid) {
-			openCommentNoMarking(idname, ytid);
-			evt.currentTarget.className += " active";
-		}
-	</script>
+	function openComment(evt, idname, ytid) {
+		openCommentNoMarking(idname, ytid);
+		evt.currentTarget.className += " active";
+	}
+</script>
 </head>
 <h1>SUCHENAME-Suche</h1>
 <form method="get">
-	<table>
-		<tr>
-			<td>Stichwort</td><td><input name="suche1" value="<?php print array_key_exists('suche1', $_GET) ? htmlentities($_GET['suche1']) : ''; ?>" /></td>
-		<tr>
-		</tr>
-			<td>Hat Zeitkommentar?</td></td><td><input name="hastimecomment" value="1" <?php print array_key_exists('hastimecomment', $_GET) ? ' checked="CHECKED" ' : ''; ?> type="checkbox" /></td
-		</tr>
-		<tr>
-			<td></td><td><input type="submit" value="Suchen" /></td>
-		</tr>
-	</table>
+<table>
+	<tr>
+		<td>Stichwort</td><td><input name="suche1" value="<?php print array_key_exists('suche1', $_GET) ? htmlentities($_GET['suche1']) : ''; ?>" /></td>
+	<tr>
+	</tr>
+		<td>Hat Zeitkommentar?</td></td><td><input name="hastimecomment" value="1" <?php print array_key_exists('hastimecomment', $_GET) ? ' checked="CHECKED" ' : ''; ?> type="checkbox" /></td
+	</tr>
+	<tr>
+		<td></td><td><input type="submit" value="Suchen" /></td>
+	</tr>
+</table>
 </form>
 
 <?php
@@ -769,441 +769,474 @@ __DATA__
 $GLOBALS['php_start'] = time();
 error_reporting(E_ALL);
 set_error_handler(function ($severity, $message, $file, $line) {
-    throw new \ErrorException($message, $severity, $severity, $file, $line);
+throw new \ErrorException($message, $severity, $severity, $file, $line);
 });
 
 ini_set('display_errors', 1);
 
-	function dier ($data, $enable_html = 0, $die = 1) {
-		$debug_backtrace = debug_backtrace();
-		$source_data = $debug_backtrace[0];
+function dier ($data, $enable_html = 0, $die = 1) {
+	$debug_backtrace = debug_backtrace();
+	$source_data = $debug_backtrace[0];
 
-		$source = '';
+	$source = '';
 
-		if(array_key_exists(1, $debug_backtrace) && array_key_exists('file', $debug_backtrace[1])) {
-			@$source .= 'Aufgerufen von <b>'.$debug_backtrace[1]['file'].'</b>::<i>';
-		}
-		
-		if(array_key_exists(1, $debug_backtrace) && array_key_exists('function', $debug_backtrace[1])) {
-			@$source .= $debug_backtrace[1]['function'];
-		}
-
-
-		@$source .= '</i>, line '.htmlentities($source_data['line'])."<br />\n";
-
-		print "<pre>\n";
-		ob_start();
-		print_r($data);
-		$buffer = ob_get_clean();
-		if($enable_html) {
-			print $buffer;
-		} else {
-			print htmlentities($buffer);
-		}
-		print "</pre>\n";
-		print "Backtrace:\n";
-		print "<pre>\n";
-		foreach ($debug_backtrace as $trace) {
-			print htmlentities(sprintf("\n%s:%s %s", $trace['file'], $trace['line'], $trace['function']));
-		}
-		print "</pre>\n";
-		exit();
+	if(array_key_exists(1, $debug_backtrace) && array_key_exists('file', $debug_backtrace[1])) {
+		@$source .= 'Aufgerufen von <b>'.$debug_backtrace[1]['file'].'</b>::<i>';
+	}
+	
+	if(array_key_exists(1, $debug_backtrace) && array_key_exists('function', $debug_backtrace[1])) {
+		@$source .= $debug_backtrace[1]['function'];
 	}
 
-	function find_matches_in_comments ($stichwort, $id) {
+
+	@$source .= '</i>, line '.htmlentities($source_data['line'])."<br />\n";
+
+	print "<pre>\n";
+	ob_start();
+	print_r($data);
+	$buffer = ob_get_clean();
+	if($enable_html) {
+		print $buffer;
+	} else {
+		print htmlentities($buffer);
+	}
+	print "</pre>\n";
+	print "Backtrace:\n";
+	print "<pre>\n";
+	foreach ($debug_backtrace as $trace) {
+		print htmlentities(sprintf("\n%s:%s %s", $trace['file'], $trace['line'], $trace['function']));
+	}
+	print "</pre>\n";
+	exit();
+}
+
+function find_matches_in_comments ($stichwort, $id) {
+	$this_finds = array();
+	if(file_exists("./comments/".$id."_0.json")) {
+		$fn = fopen("./comments/".$id."_0.json", "r");
+
+		while(!feof($fn))  {
+			$result = fgets($fn);
+			$result = strtolower($result);
+			if(preg_match_all("/.*$stichwort.*/", $result, $matches, PREG_SET_ORDER)) {
+				$this_finds[] = new searchResult($id, $matches, $result, $stichwort);
+			}
+		}
+
+		fclose($fn);
+	}
+	return $this_finds;
+}
+
+function find_matches_in_titles ($stichwort, $id) {
+	$this_finds = array();
+	if(file_exists("./titles/".$id."_TITLE.txt")) {
+		$fn = fopen("./titles/".$id."_TITLE.txt", "r");
+
+		while(!feof($fn))  {
+			$result = fgets($fn);
+			$result = strtolower($result);
+			if(preg_match_all("/.*$stichwort.*/", $result, $matches, PREG_SET_ORDER)) {
+				$this_finds[] = new searchResult($id, $matches, $result, $stichwort);
+			}
+		}
+
+		fclose($fn);
+	}
+	return $this_finds;
+}
+
+function link_url ($string) {
+	$url = '~(?:(https?)://([^\s<]+)|(www\.[^\s<]+?\.[^\s<]+))(?<![\.,:])\d+~i';
+	$string = preg_replace($url, '<a href="$0" target="_blank" title="$0">$0</a>', $string);
+	return $string;
+}
+
+function mark_results ($stichwort, $string) {
+	$string = preg_replace("/($stichwort)/", "<span class='find'>$0</span>", $string);
+	return $string;
+}
+
+function timestamp_file_exists ($id) {
+	if(file_exists("./comments/".$id."_0.json")) {
+		return True;
+	} else {
+		return False;
+	}
+}
+
+function find_matches_in_main_text ($stichwort, $id) {
+	if(show_entry($id)) {
 		$this_finds = array();
-		if(file_exists("./comments/".$id."_0.json")) {
-			$fn = fopen("./comments/".$id."_0.json", "r");
+		$fn = fopen("./results/$id.txt", "r");
 
-			while(!feof($fn))  {
-				$result = fgets($fn);
-				$result = strtolower($result);
-				if(preg_match_all("/.*$stichwort.*/", $result, $matches, PREG_SET_ORDER)) {
-					#$this_finds[] = array("matches" => $matches, "id" => $id);
-					$this_finds[] = new searchResult($id, $matches, $result, $stichwort);
-				}
+		$str = '';
+		while(!feof($fn)) {
+			$result = fgets($fn);
+			if(preg_match_all("/.*$stichwort.*/i", $result, $matches, PREG_SET_ORDER)) {
+				$this_finds[] = new searchResult($id, $matches, $result, $stichwort);
 			}
-
-			fclose($fn);
+			$str = $str.$result;
 		}
+
+		fclose($fn);
+
+
 		return $this_finds;
+	} else {
+		return array();
 	}
+}
 
-	function link_url ($string) {
-		$url = '~(?:(https?)://([^\s<]+)|(www\.[^\s<]+?\.[^\s<]+))(?<![\.,:])\d+~i';
-		$string = preg_replace($url, '<a href="$0" target="_blank" title="$0">$0</a>', $string);
-		return $string;
-	}
 
-	function mark_results ($stichwort, $string) {
-		$string = preg_replace("/($stichwort)/", "<span class='find'>$0</span>", $string);
-		return $string;
-	}
 
-	function timestamp_file_exists ($id) {
-		if(file_exists("./comments/".$id."_0.json")) {
-			return True;
-		} else {
-			return False;
-		}
-	}
 
-	function find_matches_in_main_text ($stichwort, $id) {
-		if(show_entry($id)) {
-			$this_finds = array();
-			$fn = fopen("./results/$id.txt", "r");
-
-			$str = '';
-			while(!feof($fn)) {
-				$result = fgets($fn);
-				if(preg_match_all("/.*$stichwort.*/i", $result, $matches, PREG_SET_ORDER)) {
-					$this_finds[] = new searchResult($id, $matches, $result, $stichwort);
+function get_table ($finds) {
+	$anzahl = count($finds);
+	$table = "Anzahl Ergebnisse: $anzahl<br />\n";
+	$table .= "<table>\n";
+	$table .= "<tr>\n";
+	$table .= "<th>Nr.</th>\n";
+	$table .= "<th>Dauer</th>\n";
+	$table .= "<th>Desc<br/>Text</th>\n";
+	$table .= "<th>Titel</th>\n";
+	$table .= "<th>ID</th>\n";
+	$table .= "<th>Timestamp-Kommentare</th>\n";
+	$table .= "<th>Match</th>\n";
+	$table .= "</tr>\n";
+	$i = 1;
+	foreach ($finds as $this_find_key => $this_find) {
+		if(array_key_exists('matches', $this_find)) {
+			if(show_entry($this_find->get_youtube_id())) {
+				foreach ($this_find->get_matches() as $this_find_key2 => $this_find2) {
+					$string = $this_find2[0];
+					$string = link_url($string);
+					$string = mark_results($this_find->stichwort, $string);
+					$table .= "<tr class='tr_".($i % 2)."'>\n";
+					$table .= "<td>$i</td>\n";
+					$table .= "<td>".$this_find->get_duration()."</td>\n";
+					$table .= "<td>".$this_find->get_desc().", ".$this_find->get_textfile_link()."</td>\n";
+					$table .= "<td>".$this_find->get_title()."</td>\n";
+					$table .= "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$".$this_find->get_youtube_id()."'>".$this_find->get_youtube_id()."</a></span></td>\n";
+					$table .= "<td><span style='font-size: 9;'>".$this_find->get_timestamp_comments()."</span></td>\n";
+					$table .= "<td>$string</td></tr>\n";
 				}
-				$str = $str.$result;
+				$i++;
 			}
-
-			fclose($fn);
-
-
-			return $this_finds;
-		} else {
-			return array();
 		}
 	}
+	$table .= "</table>\n";
+
+	return $table;
+}
 
 
+function show_entry ($id) {
+	if((array_key_exists('hastimecomment', $_GET) && timestamp_file_exists($id)) || !array_key_exists('hastimecomment', $_GET)) {
+		return True;
+	} else {
+		return False;
+	}
+}
 
 
-	function get_table ($finds) {
-		$anzahl = count($finds);
-		$table = "Anzahl Ergebnisse: $anzahl<br />\n";
-		$table .= "<table>\n";
-		$table .= "<tr>\n";
-		$table .= "<th>Nr.</th>\n";
-		$table .= "<th>Dauer</th>\n";
-		$table .= "<th>Desc<br/>Text</th>\n";
-		$table .= "<th>Titel</th>\n";
-		$table .= "<th>ID</th>\n";
-		$table .= "<th>Timestamp-Kommentare</th>\n";
-		$table .= "<th>Match</th>\n";
-		$table .= "</tr>\n";
-		$i = 1;
-		foreach ($finds as $this_find_key => $this_find) {
-			if(array_key_exists('matches', $this_find)) {
-				if(show_entry($this_find->get_youtube_id())) {
-					foreach ($this_find->get_matches() as $this_find_key2 => $this_find2) {
-						$string = $this_find2[0];
-						$string = link_url($string);
-						$string = mark_results($this_find->stichwort, $string);
-						$table .= "<tr class='tr_".($i % 2)."'>\n";
-						$table .= "<td>$i</td>\n";
-						$table .= "<td>".$this_find->get_duration()."</td>\n";
-						$table .= "<td>".$this_find->get_desc().", ".$this_find->get_textfile_link()."</td>\n";
-						$table .= "<td>".$this_find->get_title()."</td>\n";
-						$table .= "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$".$this_find->get_youtube_id()."'>".$this_find->get_youtube_id()."</a></span></td>\n";
-						$table .= "<td><span style='font-size: 9;'>".$this_find->get_timestamp_comments()."</span></td>\n";
-						$table .= "<td>$string</td></tr>\n";
+function get_all_files ($handle) {
+	$files = array();
+	while (false !== ($entry = readdir($handle))) {
+		if(preg_match('/.*\.txt/', $entry)) {
+			$files[] = $entry;
+		}
+	}
+	closedir($handle);
+	return $files;
+}
+
+function search_all_files ($files, $suchworte, $timeouttime, $timeout) {
+	$finds = array();
+	$comment_finds = array();
+	$titles = array();
+
+	foreach ($files as $key => $this_file) {
+		$id = $this_file;
+		$id = preg_replace('/\.txt$/', '', $id);
+
+		$starttime = time();
+		foreach ($suchworte as $key => $stichwort) {
+			$stichwort = strtolower($stichwort);
+
+			$finds = array_merge($finds, find_matches_in_main_text($stichwort, $id));
+			$comment_finds = array_merge($comment_finds, find_matches_in_comments($stichwort, $id));
+			$titles = array_merge($titles, find_matches_in_titles($stichwort, $id));
+
+			$thistime = time();
+			if($thistime - $starttime > $timeouttime) {
+				$timeout = 1;
+				continue;
+			}
+			if ($timeout) {
+				continue;
+			}
+		}
+	}
+	return array($finds, $comment_finds, $titles, $timeout);
+}
+
+class searchResult {
+	public $youtube_id;
+	public $timestamp_human;
+	public $timestamp;
+	public $title = '<i>Kein Titel</i>';
+	public $duration;
+	public $desc;
+	public $timestamp_comments = '<i>&mdash;</i>';
+	public $matches;
+	public $result;
+	public $textfile;
+	public $stichwort;
+	public $string;
+
+	function __construct($id, $matches, $result, $stichwort) {
+		$this->set_youtube_id($id);
+		$this->set_matches($matches);
+		$this->set_result($result);
+		$this->set_timestamp_from_result();
+		$this->set_timestamp_comments();
+		$this->set_stichwort($stichwort);
+		$this->set_textfile();
+	}
+
+	function replace_seconds_timestamp_with_youtube_link ($content) {
+		$id = $this->get_youtube_id();
+		$this_object = $this;
+		$GLOBALS['marked_time'] = 0;
+		$GLOBALS['timestamp'] = $this->get_timestamp();
+
+		$new_data = preg_replace_callback(
+			"/((?:\d{1,2}:)?\d{1,2}:\d{2})/", function ($match) use ($id) {
+				$original = $match[0];
+
+				$str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $original);
+				sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
+				$time_seconds = $hours * 3600 + $minutes * 60 + $seconds;
+				$time_without_seconds = $hours * 3600 + $minutes * 60;
+
+				$mark = '';
+				$markend = '';
+
+				if(0 && $GLOBALS['timestamp'] && !$GLOBALS['marked_time']) {
+					print $time_seconds." >= ".$GLOBALS['timestamp']."<br>\n";
+					if($time_without_seconds >= $GLOBALS['timestamp']) {
+						$mark = '<span style="color: red">';
+						$markend = "</span>";
+						$GLOBALS['marked_time'] = 1;
 					}
-					$i++;
 				}
-			}
-		}
-		$table .= "</table>\n";
 
-		return $table;
+				return "<a href='https://www.youtube.com/watch?v=".$this->get_youtube_id()."&t=$time_seconds'>$mark$original$markend</a>";
+			}, 
+			$content
+		);
+		$GLOBALS['marked_time'] = 0;
+		$GLOBALS['timestamp'] = Null;
+		return $new_data;
 	}
 
-
-	function show_entry ($id) {
-		if((array_key_exists('hastimecomment', $_GET) && timestamp_file_exists($id)) || !array_key_exists('hastimecomment', $_GET)) {
-			return True;
-		} else {
-			return False;
+	function get_timestamp_comments_data () {
+		$timestamps_array = array();
+		$this_timestamp_file = "./comments/".$this->get_youtube_id()."_0.json";
+		$n = 0;
+		while (file_exists($this_timestamp_file)) {
+			$content = nl2br(file_get_contents($this_timestamp_file));
+			$timestamps_array[] = $this->replace_seconds_timestamp_with_youtube_link($content);
+			$n++;
+			$this_timestamp_file = "./comments/".$this->get_youtube_id()."_".$n.".json";
 		}
+		return $timestamps_array;
 	}
 
+	function get_timestamp_comments_string () {
+		$timestamps_array = $this->get_timestamp_comments_data();
 
-	function get_all_files ($handle) {
-		$files = array();
-		while (false !== ($entry = readdir($handle))) {
-			if(preg_match('/.*\.txt/', $entry)) {
-				$files[] = $entry;
+		$timestamps = '';
+		if(count($timestamps_array) > 1) {
+			$timestamps .= '<div class="tab">';
+			for ($n = 0; $n < count($timestamps_array); $n++) {
+				$timestamps .= '<button class="tablinks" onclick="openComment(event, \''.$this->get_youtube_id().'_'.$i.'_'.$n.'\', \''.$this->get_youtube_id().'_'.$i.'\')">'.($n + 1).'</button>';
 			}
-		}
-		closedir($handle);
-		return $files;
-	}
-
-	function search_all_files ($files, $suchworte, $timeouttime, $timeout) {
-		$finds = array();
-		$comment_finds = array();
-
-		foreach ($files as $key => $this_file) {
-			$id = $this_file;
-			$id = preg_replace('/\.txt$/', '', $id);
-
-			$starttime = time();
-			foreach ($suchworte as $key => $stichwort) {
-				$stichwort = strtolower($stichwort);
-
-				$finds = array_merge($finds, find_matches_in_main_text($stichwort, $id));
-				$comment_finds = array_merge($comment_finds, find_matches_in_comments($stichwort, $id));
-
-				$thistime = time();
-				if($thistime - $starttime > $timeouttime) {
-					$timeout = 1;
-					continue;
+			$timestamps .= '</div>';
+			for ($n = 0; $n < count($timestamps_array); $n++) {
+				$style = '';
+				if($n == 0) {
+					$style = " style='display: block !important;' ";
+				} else {
+					$style = " style='display: none !important;' ";
 				}
-				if ($timeout) {
-					continue;
-				}
-			}
-		}
-		return array($finds, $comment_finds, $timeout);
-	}
-
-	class searchResult {
-		public $youtube_id;
-		public $timestamp_human;
-		public $timestamp;
-		public $title = '<i>Kein Titel</i>';
-		public $duration;
-		public $desc;
-		public $timestamp_comments = '<i>&mdash;</i>';
-		public $matches;
-		public $result;
-		public $textfile;
-		public $stichwort;
-		public $string;
-
-		function __construct($id, $matches, $result, $stichwort) {
-			$this->set_youtube_id($id);
-			$this->set_matches($matches);
-			$this->set_result($result);
-			$this->set_timestamp_from_result();
-			$this->set_timestamp_comments();
-			$this->set_stichwort($stichwort);
-			$this->set_textfile();
-		}
-
-		function replace_seconds_timestamp_with_youtube_link ($content) {
-			$id = $this->get_youtube_id();
-			$this_object = $this;
-			$GLOBALS['marked_time'] = 0;
-			$GLOBALS['timestamp'] = $this->get_timestamp();
-
-			$new_data = preg_replace_callback(
-				"/((?:\d{1,2}:)?\d{1,2}:\d{2})/", function ($match) use ($id) {
-					$original = $match[0];
-
-					$str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $original);
-					sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-					$time_seconds = $hours * 3600 + $minutes * 60 + $seconds;
-					$time_without_seconds = $hours * 3600 + $minutes * 60;
-
-					$mark = '';
-					$markend = '';
-
-					if(0 && $GLOBALS['timestamp'] && !$GLOBALS['marked_time']) {
-						print $time_seconds." >= ".$GLOBALS['timestamp']."<br>\n";
-						if($time_without_seconds >= $GLOBALS['timestamp']) {
-							$mark = '<span style="color: red">';
-							$markend = "</span>";
-							$GLOBALS['marked_time'] = 1;
-						}
-					}
-
-					return "<a href='https://www.youtube.com/watch?v=".$this->get_youtube_id()."&t=$time_seconds'>$mark$original$markend</a>";
-				}, 
-				$content
-			);
-			$GLOBALS['marked_time'] = 0;
-			$GLOBALS['timestamp'] = Null;
-			return $new_data;
-		}
-
-		function get_timestamp_comments_data () {
-			$timestamps_array = array();
-			$this_timestamp_file = "./comments/".$this->get_youtube_id()."_0.json";
-			$n = 0;
-			while (file_exists($this_timestamp_file)) {
-				$content = nl2br(file_get_contents($this_timestamp_file));
-				$timestamps_array[] = $this->replace_seconds_timestamp_with_youtube_link($content);
-				$n++;
-				$this_timestamp_file = "./comments/".$this->get_youtube_id()."_".$n.".json";
-			}
-			return $timestamps_array;
-		}
-
-		function get_timestamp_comments_string () {
-			$timestamps_array = $this->get_timestamp_comments_data();
-
-			$timestamps = '';
-			if(count($timestamps_array) > 1) {
-				$timestamps .= '<div class="tab">';
-				for ($n = 0; $n < count($timestamps_array); $n++) {
-					$timestamps .= '<button class="tablinks" onclick="openComment(event, \''.$this->get_youtube_id().'_'.$i.'_'.$n.'\', \''.$this->get_youtube_id().'_'.$i.'\')">'.($n + 1).'</button>';
-				}
+				$timestamps .= '<div '.$style.' id="'.$this->get_youtube_id().'_'.$i.'_'.$n.'" class="tabcontent_'.$this->get_youtube_id().'_'.$i.'">';
+				$timestamps .= $timestamps_array[$n];
 				$timestamps .= '</div>';
-				for ($n = 0; $n < count($timestamps_array); $n++) {
-					$style = '';
-					if($n == 0) {
-						$style = " style='display: block !important;' ";
-					} else {
-						$style = " style='display: none !important;' ";
-					}
-					$timestamps .= '<div '.$style.' id="'.$this->get_youtube_id().'_'.$i.'_'.$n.'" class="tabcontent_'.$this->get_youtube_id().'_'.$i.'">';
-					$timestamps .= $timestamps_array[$n];
-					$timestamps .= '</div>';
-				}
-			} else if (count($timestamps_array) == 1) {
-				$timestamps = $timestamps_array[0];
 			}
-			return $timestamps;
+		} else if (count($timestamps_array) == 1) {
+			$timestamps = $timestamps_array[0];
 		}
+		return $timestamps;
+	}
 
 
-		function get_title_from_file () {
-			$title = NULL;
-			$title_file = "titles/".$this->get_youtube_id()."_TITLE.txt";
-			if(file_exists($title_file)) {
-				$title = file_get_contents($title_file);
-			}
-			return $title;
+	function get_title_from_file () {
+		$title = NULL;
+		$title_file = "titles/".$this->get_youtube_id()."_TITLE.txt";
+		if(file_exists($title_file)) {
+			$title = file_get_contents($title_file);
 		}
+		return $title;
+	}
 
-		function get_desc_from_file () {
-			$desc_file = "desc/".$this->get_youtube_id()."_TITLE.txt";
-			$desc = '<i>Keine Beschreibung</i>';
-			if(file_exists($desc_file)) {
-				$desc = "<a href='./$desc_file'>Desc</a>";
-			}
-			return $desc;
+	function get_desc_from_file () {
+		$desc_file = "desc/".$this->get_youtube_id()."_TITLE.txt";
+		$desc = '<i>Keine Beschreibung</i>';
+		if(file_exists($desc_file)) {
+			$desc = "<a href='./$desc_file'>Desc</a>";
 		}
+		return $desc;
+	}
 
-		function set_youtube_id ($value) { 
-			$this->youtube_id = $value;
-			$this->set_textfile();
-			$this->set_title();
-			$this->set_duration();
-			$this->set_desc();
+	function set_youtube_id ($value) { 
+		$this->youtube_id = $value;
+		$this->set_textfile();
+		$this->set_title();
+		$this->set_duration();
+		$this->set_desc();
+	}
+	function get_youtube_id () { return $this->youtube_id; }
+
+	function get_textfile_link() {
+		$file = "<a href='./results/".$this->get_youtube_id().".txt'>Text</a>";
+		return $file;
+	}
+	function set_textfile () { $file = "./results/".$this->get_youtube_id().".txt"; if(file_exists($file)) { $this->textfile = $file; } }
+	function get_textfile () { return $this->textfile; }
+
+	function set_timestamp_human ($value) { $this->timestamp_human = $value; }
+	function get_timestamp_human () { return $this->timestamp_human; }
+
+	function set_timestamp ($value) { $this->timestamp = $value; }
+	function get_timestamp () { return $this->timestamp; }
+
+	function set_timestamp_from_result () {
+		$ts_human = Null;
+		$ts = Null;
+
+		$id = $this->get_youtube_id();
+		$result = $this->get_result();
+
+		if(preg_match('/^\[((?:\d+:)?\d+:\d+) -> https:\/\/www.youtube.com\/watch\?v='.$id.'&t=(\d+)\]/', $result, $matches)) {
+			$this->set_timestamp_human($matches[1]);
+			$this->set_timestamp($matches[2]);
 		}
-		function get_youtube_id () { return $this->youtube_id; }
-
-		function get_textfile_link() {
-			$file = "<a href='./results/".$this->get_youtube_id().".txt'>Text</a>";
-			return $file;
-		}
-		function set_textfile () { $file = "./results/".$this->get_youtube_id().".txt"; if(file_exists($file)) { $this->textfile = $file; } }
-		function get_textfile () { return $this->textfile; }
-
-		function set_timestamp_human ($value) { $this->timestamp_human = $value; }
-		function get_timestamp_human () { return $this->timestamp_human; }
-
-		function set_timestamp ($value) { $this->timestamp = $value; }
-		function get_timestamp () { return $this->timestamp; }
-
-		function set_timestamp_from_result () {
-			$ts_human = Null;
-			$ts = Null;
-
-			$id = $this->get_youtube_id();
-			$result = $this->get_result();
-
-			if(preg_match('/^\[((?:\d+:)?\d+:\d+) -> https:\/\/www.youtube.com\/watch\?v='.$id.'&t=(\d+)\]/', $result, $matches)) {
-				$this->set_timestamp_human($matches[1]);
-				$this->set_timestamp($matches[2]);
-			}
 #dier($this);
-		}
-
-
-		function set_text ($value) { $this->text = $value; }
-		function get_text () { return $this->text; }
-
-		function set_title () {
-			$value = $this->get_title_from_file();
-			$value = str_replace(array("\n", "\r"), '', $value);       
-			$this->title = $value;
-		}
-		function get_title () { return $this->title; }
-
-		function get_duration_from_file() {
-			$duration_file = "durations/".$this->get_youtube_id()."_TITLE.txt";
-			$duration = '<i>Unbekannte Länge</i>';
-			if(file_exists($duration_file)) {
-				$duration = file_get_contents($duration_file);
-			}
-			return $duration;
-		}
-		function set_duration () {
-			$value = $this->get_duration_from_file();
-			$value = str_replace(array("\n", "\r"), '', $value);       
-			$this->duration = $value;
-		}
-		function get_duration () { return $this->duration; }
-
-		function set_desc () { $this->desc = $this->get_desc_from_file(); }
-		function get_desc () { return $this->desc; }
-
-		function set_timestamp_comments () { $this->timestamp_comments = $this->get_timestamp_comments_string(); }
-		function get_timestamp_comments () { return $this->timestamp_comments; }
-
-		function set_matches ($value) { $this->matches = $value; }
-		function get_matches () { return $this->matches; }
-
-		function set_result ($value) { $this->result = $value; }
-		function get_result () { return $this->result; }
-
-		function set_stichwort ($value) { $this->stichwort = $value; }
-		function get_stichwort () { return $this->stichwort; }
-
-		function set_string ($value) { $this->string = $value; }
-		function get_string () { return $this->string; }
-
 	}
 
-	$suchworte = array();
 
-	foreach ($_GET as $key => $value) {
-		if(preg_match('/suche\d+/', $key)) {
-			if(preg_match('/.+/', $value)) {
-				$suchworte[] = $value;
-			}
+	function set_text ($value) { $this->text = $value; }
+	function get_text () { return $this->text; }
+
+	function set_title () {
+		$value = $this->get_title_from_file();
+		$value = str_replace(array("\n", "\r"), '', $value);       
+		$this->title = $value;
+	}
+	function get_title () { return $this->title; }
+
+	function get_duration_from_file() {
+		$duration_file = "durations/".$this->get_youtube_id()."_TITLE.txt";
+		$duration = '<i>Unbekannte Länge</i>';
+		if(file_exists($duration_file)) {
+			$duration = file_get_contents($duration_file);
+		}
+		return $duration;
+	}
+	function set_duration () {
+		$value = $this->get_duration_from_file();
+		$value = str_replace(array("\n", "\r"), '', $value);       
+		$this->duration = $value;
+	}
+	function get_duration () { return $this->duration; }
+
+	function set_desc () { $this->desc = $this->get_desc_from_file(); }
+	function get_desc () { return $this->desc; }
+
+	function set_timestamp_comments () { $this->timestamp_comments = $this->get_timestamp_comments_string(); }
+	function get_timestamp_comments () { return $this->timestamp_comments; }
+
+	function set_matches ($value) { $this->matches = $value; }
+	function get_matches () { return $this->matches; }
+
+	function set_result ($value) { $this->result = $value; }
+	function get_result () { return $this->result; }
+
+	function set_stichwort ($value) { $this->stichwort = $value; }
+	function get_stichwort () { return $this->stichwort; }
+
+	function set_string ($value) { $this->string = $value; }
+	function get_string () { return $this->string; }
+
+}
+
+$suchworte = array();
+
+foreach ($_GET as $key => $value) {
+	if(preg_match('/suche\d+/', $key)) {
+		if(preg_match('/.+/', $value)) {
+			$suchworte[] = $value;
 		}
 	}
+}
 
-	if(count($suchworte)) {
-		$timeout = 0;
-		$timeouttime = 1;
-		if ($handle = opendir('./results/')) {
-			$files = get_all_files($handle);
+if(count($suchworte)) {
+	$timeout = 0;
+	$timeouttime = 1;
+	if ($handle = opendir('./results/')) {
+		$files = get_all_files($handle);
 
-			$finds_and_comments_and_timeout = search_all_files($files, $suchworte, $timeouttime, $timeout);
+		$finds_and_comments_and_title_timeout = search_all_files($files, $suchworte, $timeouttime, $timeout);
 
-			$finds = $finds_and_comments_and_timeout[0];
-			$comments = $finds_and_comments_and_timeout[1];
-			$timeout = $finds_and_comments_and_timeout[2];
+		$finds = $finds_and_comments_and_title_timeout[0];
+		$comments = $finds_and_comments_and_title_timeout[1];
+		$title = $finds_and_comments_and_title_timeout[2];
+		$timeout = $finds_and_comments_and_title_timeout[3];
 
-			if(!count($finds)) {
-				print("Keine Ergebnisse");
-			} else {
-				print "<h2>Text</h2>";
-				print get_table($finds);
-			}
-
-			if(!count($comments)) {
-				print("Keine Ergebnisse");
-			} else {
-				print "<h2>Kommentare</h2>";
-				print get_table($comments);
-			}
-
-			if($timeout) {
-				print "Timeout ($timeouttime Sekunden) erreicht.";
-			}
-		} else {
-			print "Dir ./results/ not found";
+		if(count($finds)) {
+			print "<a href='#text'>Text</a><br>";
 		}
+
+		if(count($comments)) {
+			print "<a href='#kommentare'>Kommentare</a><br>";
+		}
+
+		if(count($title)) {
+			print "<a href='#titel'>Titel</a><br>";
+		}
+
+		if(count($finds)) {
+			print "<h2 id='text'>Text</h2>";
+			print get_table($finds);
+		}
+
+		if(count($comments)) {
+			print "<h2 id='kommentare'>Kommentare</h2>";
+			print get_table($comments);
+		}
+
+		if(count($title)) {
+			print "<h2 id='titel'>Titel</h2>";
+			print get_table($title);
+		}
+
+		if($timeout) {
+			print "timeout ($timeouttime sekunden) erreicht.";
+		}
+	} else {
+		print "dir ./results/ not found";
 	}
+}
 ?>
