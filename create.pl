@@ -886,7 +886,7 @@ function find_matches_in_main_text ($stichwort, $id, $i) {
 	}
 }
 
-function print_table ($finds) {
+function print_table ($finds, $is_title = 0) {
 	$anzahl = count($finds);
 	print "Anzahl Ergebnisse: $anzahl<br />\n";
 	print "<table>\n";
@@ -902,7 +902,7 @@ function print_table ($finds) {
 	$i = 1;
 	foreach ($finds as $this_find_key => $this_find) {
 		if(array_key_exists('matches', $this_find)) {
-			if(show_entry($this_find->get_youtube_id())) {
+			if(show_entry($this_find->get_youtube_id(), $is_title)) {
 				foreach ($this_find->get_matches() as $this_find_key2 => $this_find2) {
 					$string = $this_find2[0];
 					$string = link_url($string);
@@ -923,7 +923,10 @@ function print_table ($finds) {
 	print "</table>\n";
 }
 
-function show_entry ($id) {
+function show_entry ($id, $is_title = False) {
+	if($is_title) {
+		return True;
+	}
 	if((array_key_exists('hastimecomment', $_GET) && timestamp_file_exists($id)) || !array_key_exists('hastimecomment', $_GET)) {
 		return True;
 	} else {
@@ -988,7 +991,6 @@ class searchResult {
 	public $result;
 	public $textfile;
 	public $stichwort;
-	public $string;
 	public $counter_i;
 
 	function __construct($id, $matches, $result, $stichwort, $i) {
@@ -1171,9 +1173,6 @@ class searchResult {
 	function set_stichwort ($value) { $this->stichwort = $value; }
 	function get_stichwort () { return $this->stichwort; }
 
-	function set_string ($value) { $this->string = $value; }
-	function get_string () { return $this->string; }
-
 	function set_i ($value) { $this->counter_i = $value; }
 	function get_i () { return $this->counter_i; }
 
@@ -1226,7 +1225,7 @@ if(count($suchworte)) {
 
 		if(count($title)) {
 			print "<h2 id='titel'>Titel</h2>";
-			print_table($title);
+			print_table($title, 1);
 		}
 
 		if($timeout) {
