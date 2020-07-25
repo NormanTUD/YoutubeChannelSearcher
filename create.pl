@@ -918,7 +918,7 @@ function print_table ($finds) {
 					print "<td>".$this_find->get_desc().", ".$this_find->get_textfile_link()."</td>\n";
 					print "<td>".$this_find->get_title()."</td>\n";
 					print "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$".$this_find->get_youtube_id()."'>".$this_find->get_youtube_id()."</a></span></td>\n";
-					print "<td><span style='font-size: 9;'>".$this_find->get_timestamp_comments()."</span></td>\n";
+					print "<td><span style='font-size: 10;'>".$this_find->get_timestamp_comments()."</span></td>\n";
 					print "<td>$string</td></tr>\n";
 				}
 				$i++;
@@ -1035,7 +1035,7 @@ class searchResult {
 					}
 				}
 
-				return "<a href='https://www.youtube.com/watch?v=".$this->get_youtube_id()."&t=$time_seconds'>$mark$original ($time_seconds >= ".$GLOBALS['timestamp'].")$markend</a>";
+				return "<a href='https://www.youtube.com/watch?v=".$this->get_youtube_id()."&t=$time_seconds'>$mark$original$markend</a>";
 			}, 
 			$content
 		);
