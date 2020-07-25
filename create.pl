@@ -810,7 +810,7 @@ function dier ($data, $enable_html = 0, $die = 1) {
 	exit();
 }
 
-function find_matches_in_comments ($stichwort, $id) {
+function find_matches_in_comments ($stichwort, $id, $i) {
 	$this_finds = array();
 	if(file_exists("./comments/".$id."_0.json")) {
 		$fn = fopen("./comments/".$id."_0.json", "r");
@@ -819,7 +819,7 @@ function find_matches_in_comments ($stichwort, $id) {
 			$result = fgets($fn);
 			$result = strtolower($result);
 			if(preg_match_all("/.*$stichwort.*/", $result, $matches, PREG_SET_ORDER)) {
-				$this_finds[] = new searchResult($id, $matches, $result, $stichwort);
+				$this_finds[] = new searchResult($id, $matches, $result, $stichwort, $i);
 			}
 		}
 
@@ -828,7 +828,7 @@ function find_matches_in_comments ($stichwort, $id) {
 	return $this_finds;
 }
 
-function find_matches_in_titles ($stichwort, $id) {
+function find_matches_in_titles ($stichwort, $id, $i) {
 	$this_finds = array();
 	if(file_exists("./titles/".$id."_TITLE.txt")) {
 		$fn = fopen("./titles/".$id."_TITLE.txt", "r");
@@ -837,7 +837,7 @@ function find_matches_in_titles ($stichwort, $id) {
 			$result = fgets($fn);
 			$result = strtolower($result);
 			if(preg_match_all("/.*$stichwort.*/", $result, $matches, PREG_SET_ORDER)) {
-				$this_finds[] = new searchResult($id, $matches, $result, $stichwort);
+				$this_finds[] = new searchResult($id, $matches, $result, $stichwort, $i);
 			}
 		}
 
@@ -865,7 +865,7 @@ function timestamp_file_exists ($id) {
 	}
 }
 
-function find_matches_in_main_text ($stichwort, $id) {
+function find_matches_in_main_text ($stichwort, $id, $i) {
 	if(show_entry($id)) {
 		$this_finds = array();
 		$fn = fopen("./results/$id.txt", "r");
@@ -874,7 +874,7 @@ function find_matches_in_main_text ($stichwort, $id) {
 		while(!feof($fn)) {
 			$result = fgets($fn);
 			if(preg_match_all("/.*$stichwort.*/i", $result, $matches, PREG_SET_ORDER)) {
-				$this_finds[] = new searchResult($id, $matches, $result, $stichwort);
+				$this_finds[] = new searchResult($id, $matches, $result, $stichwort, $i);
 			}
 			$str = $str.$result;
 		}
@@ -891,19 +891,19 @@ function find_matches_in_main_text ($stichwort, $id) {
 
 
 
-function get_table ($finds) {
+function print_table ($finds) {
 	$anzahl = count($finds);
-	$table = "Anzahl Ergebnisse: $anzahl<br />\n";
-	$table .= "<table>\n";
-	$table .= "<tr>\n";
-	$table .= "<th>Nr.</th>\n";
-	$table .= "<th>Dauer</th>\n";
-	$table .= "<th>Desc<br/>Text</th>\n";
-	$table .= "<th>Titel</th>\n";
-	$table .= "<th>ID</th>\n";
-	$table .= "<th>Timestamp-Kommentare</th>\n";
-	$table .= "<th>Match</th>\n";
-	$table .= "</tr>\n";
+	print "Anzahl Ergebnisse: $anzahl<br />\n";
+	print "<table>\n";
+	print "<tr>\n";
+	print "<th>Nr.</th>\n";
+	print "<th>Dauer</th>\n";
+	print "<th>Desc<br/>Text</th>\n";
+	print "<th>Titel</th>\n";
+	print "<th>ID</th>\n";
+	print "<th>Timestamp-Kommentare</th>\n";
+	print "<th>Match</th>\n";
+	print "</tr>\n";
 	$i = 1;
 	foreach ($finds as $this_find_key => $this_find) {
 		if(array_key_exists('matches', $this_find)) {
@@ -912,22 +912,20 @@ function get_table ($finds) {
 					$string = $this_find2[0];
 					$string = link_url($string);
 					$string = mark_results($this_find->stichwort, $string);
-					$table .= "<tr class='tr_".($i % 2)."'>\n";
-					$table .= "<td>$i</td>\n";
-					$table .= "<td>".$this_find->get_duration()."</td>\n";
-					$table .= "<td>".$this_find->get_desc().", ".$this_find->get_textfile_link()."</td>\n";
-					$table .= "<td>".$this_find->get_title()."</td>\n";
-					$table .= "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$".$this_find->get_youtube_id()."'>".$this_find->get_youtube_id()."</a></span></td>\n";
-					$table .= "<td><span style='font-size: 9;'>".$this_find->get_timestamp_comments()."</span></td>\n";
-					$table .= "<td>$string</td></tr>\n";
+					print "<tr class='tr_".($i % 2)."'>\n";
+					print "<td>$i</td>\n";
+					print "<td>".$this_find->get_duration()."</td>\n";
+					print "<td>".$this_find->get_desc().", ".$this_find->get_textfile_link()."</td>\n";
+					print "<td>".$this_find->get_title()."</td>\n";
+					print "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$".$this_find->get_youtube_id()."'>".$this_find->get_youtube_id()."</a></span></td>\n";
+					print "<td><span style='font-size: 9;'>".$this_find->get_timestamp_comments()."</span></td>\n";
+					print "<td>$string</td></tr>\n";
 				}
 				$i++;
 			}
 		}
 	}
-	$table .= "</table>\n";
-
-	return $table;
+	print "</table>\n";
 }
 
 
@@ -961,12 +959,16 @@ function search_all_files ($files, $suchworte, $timeouttime, $timeout) {
 		$id = preg_replace('/\.txt$/', '', $id);
 
 		$starttime = time();
+		$i = 0;
 		foreach ($suchworte as $key => $stichwort) {
 			$stichwort = strtolower($stichwort);
 
-			$finds = array_merge($finds, find_matches_in_main_text($stichwort, $id));
-			$comment_finds = array_merge($comment_finds, find_matches_in_comments($stichwort, $id));
-			$titles = array_merge($titles, find_matches_in_titles($stichwort, $id));
+			$finds = array_merge($finds, find_matches_in_main_text($stichwort, $id, $i));
+			$i++;
+			$comment_finds = array_merge($comment_finds, find_matches_in_comments($stichwort, $id, $i));
+			$i++;
+			$titles = array_merge($titles, find_matches_in_titles($stichwort, $id, $i));
+			$i++;
 
 			$thistime = time();
 			if($thistime - $starttime > $timeouttime) {
@@ -994,8 +996,9 @@ class searchResult {
 	public $textfile;
 	public $stichwort;
 	public $string;
+	public $counter_i;
 
-	function __construct($id, $matches, $result, $stichwort) {
+	function __construct($id, $matches, $result, $stichwort, $i) {
 		$this->set_youtube_id($id);
 		$this->set_matches($matches);
 		$this->set_result($result);
@@ -1003,6 +1006,7 @@ class searchResult {
 		$this->set_timestamp_comments();
 		$this->set_stichwort($stichwort);
 		$this->set_textfile();
+		$this->set_i($i);
 	}
 
 	function replace_seconds_timestamp_with_youtube_link ($content) {
@@ -1058,6 +1062,7 @@ class searchResult {
 		$timestamps_array = $this->get_timestamp_comments_data();
 
 		$timestamps = '';
+		$i = $this->get_i();
 		if(count($timestamps_array) > 1) {
 			$timestamps .= '<div class="tab">';
 			for ($n = 0; $n < count($timestamps_array); $n++) {
@@ -1180,6 +1185,10 @@ class searchResult {
 	function set_string ($value) { $this->string = $value; }
 	function get_string () { return $this->string; }
 
+
+	function set_i ($value) { $this->counter_i = $value; }
+	function get_i () { return $this->counter_i; }
+
 }
 
 $suchworte = array();
@@ -1219,17 +1228,17 @@ if(count($suchworte)) {
 
 		if(count($finds)) {
 			print "<h2 id='text'>Text</h2>";
-			print get_table($finds);
+			print_table($finds);
 		}
 
 		if(count($comments)) {
 			print "<h2 id='kommentare'>Kommentare</h2>";
-			print get_table($comments);
+			print_table($comments);
 		}
 
 		if(count($title)) {
 			print "<h2 id='titel'>Titel</h2>";
-			print get_table($title);
+			print_table($title);
 		}
 
 		if($timeout) {
