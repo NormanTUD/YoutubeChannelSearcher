@@ -897,7 +897,18 @@ function find_matches_in_main_text ($stichwort, $id, $i) {
 		while(!feof($fn)) {
 			$result = fgets($fn);
 			if(preg_match_all("/.*$stichwort.*/i", $result, $matches, PREG_SET_ORDER)) {
-				$this_finds[] = new searchResult($id, $matches, $result, $stichwort, $i);
+				$lc_matches = array();
+				foreach ($matches as $this_match) {
+					if(preg_match('/^(\[.*\])(.*)/', $this_match[0], $internal_matches)) {
+						$timestamp = $internal_matches[1];
+						$text = strtolower($internal_matches[2]);
+						$new_text = "$timestamp$text";
+						$lc_matches[][] = $new_text;
+					} else {
+						$lc_matches[][] = $this_match[0];
+					}
+				}
+				$this_finds[] = new searchResult($id, $lc_matches, $result, $stichwort, $i);
 			}
 			$str = $str.$result;
 		}
