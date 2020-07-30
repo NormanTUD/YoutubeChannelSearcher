@@ -22,6 +22,7 @@ my %options = (
 	comments => 1,
 	rename => 0,
 	repair => 0,
+	commentlimit => 0,
 	titleregex => ''
 );
 
@@ -205,7 +206,11 @@ sub download_comments {
 	if(-e $comments_file) {
 		mywarn "$comments_file already exists";
 	} elsif ($options{comments}) {
-		my $command = qq#cd comments; python2.7 downloader.py --output "$comments_file" --youtubeid "$id"; cd -#;
+		my $parameter = qq# --output "$comments_file" --youtubeid "$id" #;
+		if ($options{commentlimit}) {
+			$parameter .= qq# --limit $options{commentlimit} #;
+		}
+		my $command = qq#cd comments; python2.7 downloader.py $parameter; cd -#;
 		debug $command;
 		system($command);
 	} else {
@@ -626,6 +631,8 @@ sub analyze_args {
 			$options{debug} = 1;
 		} elsif(m#^--repair(=\d+)?$#) {
 			$options{repair} = 1;
+		} elsif(m#^--commentlimit=(\d+)?$#) {
+			$options{commentlimit} = $1;
 		} elsif(m#^--titleregex=(.*)$#) {
 			$options{titleregex} = $1;
 		} elsif(m#^--rename$#) {
