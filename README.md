@@ -11,7 +11,9 @@ This will create a folder called `/var/www/domian/` and downloads all the of ava
 
 - Latest version of `youtube-dl`
 
-> sudo apt-get install jq python2.7
+> sudo apt-get install jq python2.7 python-pip
+
+> sudo pip install lxml cssselect
 
 > sudo cpan -i Smart::Comments
 
