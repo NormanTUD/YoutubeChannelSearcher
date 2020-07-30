@@ -20,6 +20,7 @@ my %options = (
 	lang => 'de',
 	random => 0,
 	comments => 1,
+	rename => 0,
 	repair => 0,
 	titleregex => ''
 );
@@ -54,6 +55,22 @@ sub main {
 		width => 65, height => 20, listheight => 5,
 		order => [ 'whiptail', 'dialog' ] );
 
+
+	if(!defined $options{path}) {
+		$options{path} = $d->inputbox(
+			text => 'Enter the Path...',
+			entry => $ENV{YoutubeChannelSearcherDir} ? $ENV{YoutubeChannelSearcherDir} : ''
+		);
+	}
+
+	if(!defined $options{name} && !$options{rename} && -e "$options{path}/index.php") {
+		my $index_file = "$options{path}/index.php";
+		my $old_index = read_file($index_file);
+		if($old_index =~ m#<title>(.*?)-Suche</title>#) {
+			$options{name} = $1;
+		}
+	}
+
 	if(!defined $options{name}) {
 		$options{name} = $d->inputbox(
 			text => 'Enter the Name...',
@@ -70,12 +87,6 @@ sub main {
 		}
 	}
 
-	if(!defined $options{path}) {
-		$options{path} = $d->inputbox(
-			text => 'Enter the Path...',
-			entry => ''
-		);
-	}
 
 	if(!defined $options{lang}) {
 		$options{lang} = $d->inputbox(
@@ -576,6 +587,7 @@ perl create.pl --path=/var/www/domian --name="Domian-Suche" --parameter=https://
 --name="Name"												Name of the search
 --parameter=https://www.youtube.com/watch?v=07s3E2Gcvcs&list=PLQ9CsdXRvhNdqpNCs-Fsy4NSIQnWfsYiM		Youtube link (playlist or single video or channel) that should be downloaded
 --titleregex="a.*b"											Only download videos in which's titles the regex matches
+--rename												Prompt for a new search name even if one exists already
 --repair												Repairs a repository
 --random												Shuffles order of downloading randomly	
 EOL
@@ -615,6 +627,8 @@ sub analyze_args {
 			$options{repair} = 1;
 		} elsif(m#^--titleregex=(.*)$#) {
 			$options{titleregex} = $1;
+		} elsif(m#^--rename$#) {
+			$options{rename} = 1;
 		} elsif(m#^--path=(.*)$#) {
 			$options{path} = $1;
 		} elsif(m#^--nocomments$#) {

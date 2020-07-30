@@ -10,4 +10,15 @@ This will create a folder called `/var/www/domian/` and downloads all the of ava
 # Dependencies
 
 - Latest version of `youtube-dl`
-- `Smart::Comments` (Perl-module)
+> sudo cpan -i Smart::Comments
+
+> sudo cpan -i JSON::Parse
+
+> sudo cpan -i UI::Dialog
+
+# Environment variables
+
+Use `/var/www/` as main dir
+
+> export YoutubeChannelSearcherDir=/var/www/
+
