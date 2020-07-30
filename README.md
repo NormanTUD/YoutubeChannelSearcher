@@ -10,6 +10,9 @@ This will create a folder called `/var/www/domian/` and downloads all the of ava
 # Dependencies
 
 - Latest version of `youtube-dl`
+
+> sudo apt-get install jq python2.7
+
 > sudo cpan -i Smart::Comments
 
 > sudo cpan -i JSON::Parse
