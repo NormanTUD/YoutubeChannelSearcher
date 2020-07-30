@@ -969,7 +969,7 @@ function print_table ($finds, $is_title = 0) {
 					print "<td>".$this_find->get_duration()."</td>\n";
 					print "<td>".$this_find->get_desc().", ".$this_find->get_textfile_link()."</td>\n";
 					print "<td>".$this_find->get_title()."</td>\n";
-					print "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=$".$this_find->get_youtube_id()."'>".$this_find->get_youtube_id()."</a></span></td>\n";
+					print "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=".$this_find->get_youtube_id()."'>".$this_find->get_youtube_id()."</a></span></td>\n";
 					print "<td><span style='font-size: 11;'>".$this_find->get_timestamp_comments()."</span></td>\n";
 					print "<td>$string</td></tr>\n";
 				}
