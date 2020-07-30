@@ -350,6 +350,7 @@ sub download_data {
 
 	foreach my $id (@ids) { ### Working===[%]     done
 		mywarn "\n"; # for smart comments
+		$id =~ s#https://www.youtube.com/watch?v=(.*)(?:&|$)#$1#g;
 		debug "Getting data for id $id";
 		my $unavailable = "$options{path}/unavailable";
 		my $results_id = "$results/$id.txt";
