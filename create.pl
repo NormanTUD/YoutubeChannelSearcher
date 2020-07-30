@@ -777,7 +777,16 @@ __DATA__
 	}
 </script>
 </head>
+<?php
+	function count_number_of_results () {
+		$fi = new FilesystemIterator(__DIR__.'/results/', FilesystemIterator::SKIP_DOTS);
+		return iterator_count($fi);
+	}
+?>
 <h1>SUCHENAME-Suche</h1>
+
+Searching through <?php print count_number_of_results(); ?> files
+
 <form method="get">
 <table>
 	<tr>
