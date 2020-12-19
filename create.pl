@@ -707,6 +707,25 @@ sub uniq {
 }
 
 __DATA__
+<?php
+	$GLOBALS['pagenr'] = 0;
+	if(array_key_exists("pagenr", $_GET)) {
+		if(!preg_match('/^\d+$/', $_GET['pagenr'])) {
+			$GLOBALS['pagenr'] = 0;
+		} else {
+			$GLOBALS['pagenr'] = $_GET['pagenr'];
+		}
+	} else {
+		$GLOBALS['pagenr'] = 0;
+	}
+
+	$GLOBALS['results_per_page'] = 50;
+	$GLOBALS['min_result'] = $GLOBALS['pagenr'] * $GLOBALS['results_per_page'];
+	$GLOBALS['max_result'] = ($GLOBALS['pagenr'] + 1) * $GLOBALS['results_per_page'];
+
+
+	$GLOBALS['show_next_page'] = 0;
+?>
 <head>
 <title>SUCHENAME-Suche</title>
 <style type="text/css">
@@ -802,6 +821,7 @@ Searching through <?php print count_number_of_results(); ?> files
 </form>
 
 <?php
+
 
 $GLOBALS['php_start'] = time();
 error_reporting(E_ALL);
@@ -925,23 +945,31 @@ function find_matches_in_main_text ($stichwort, $id, $i) {
 		$fn = fopen("./results/$id.txt", "r");
 
 		$str = '';
+		$j = 0;
 		while(!feof($fn)) {
-			$result = fgets($fn);
-			if(preg_match_all("/.*$stichwort.*/i", $result, $matches, PREG_SET_ORDER)) {
-				$lc_matches = array();
-				foreach ($matches as $this_match) {
-					if(preg_match('/^(\[.*\])(.*)/', $this_match[0], $internal_matches)) {
-						$timestamp = $internal_matches[1];
-						$text = strtolower($internal_matches[2]);
-						$new_text = "$timestamp$text";
-						$lc_matches[][] = $new_text;
-					} else {
-						$lc_matches[][] = $this_match[0];
+			if($j >= $GLOBALS['min_result'] && $j <= $GLOBALS['max_result']) {
+				$result = fgets($fn);
+				if(preg_match_all("/.*$stichwort.*/i", $result, $matches, PREG_SET_ORDER)) {
+					$lc_matches = array();
+					foreach ($matches as $this_match) {
+						if(preg_match('/^(\[.*\])(.*)/', $this_match[0], $internal_matches)) {
+							$timestamp = $internal_matches[1];
+							$text = strtolower($internal_matches[2]);
+							$new_text = "$timestamp$text";
+							$lc_matches[][] = $new_text;
+						} else {
+							$lc_matches[][] = $this_match[0];
+						}
 					}
+					$this_finds[] = new searchResult($id, $lc_matches, $result, $stichwort, $i);
+					$str = $str.$result;
+					$j++;
 				}
-				$this_finds[] = new searchResult($id, $lc_matches, $result, $stichwort, $i);
+			} else if($j >= $GLOBALS['max_result']) {
+				$GLOBALS['show_next_page'] = 1;
+				break;
 			}
-			$str = $str.$result;
+
 		}
 
 		fclose($fn);
@@ -1244,7 +1272,6 @@ class searchResult {
 
 	function set_i ($value) { $this->counter_i = $value; }
 	function get_i () { return $this->counter_i; }
-
 }
 
 $suchworte = array();
@@ -1312,6 +1339,12 @@ if(count($suchworte)) {
 		}
 	} else {
 		print "dir ./results/ not found";
+	}
+}
+
+if($GLOBALS['show_next_page']) {
+	if(array_key_exists('suche1', $_GET)) {
+		print "<a href='index.php?suche1=".urlencode($_GET['suche1'])."&pagenr=".($GLOBALS['pagenr'] + 1)."'>Next page (".$GLOBALS['results_per_page']." more results)</a>";
 	}
 }
 ?>
