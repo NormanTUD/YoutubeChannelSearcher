@@ -40,6 +40,14 @@ sub mywarn (@) {
 	}
 }
 
+sub debug_level (@) {
+	my $level = shift @_;
+	return if !($options{debug} >= $level);
+	foreach (@_) {
+		warn color("white on_blue").$_.color("reset")."\n";
+	}
+}
+
 sub debug (@) {
 	return if !$options{debug};
 	foreach (@_) {
@@ -390,7 +398,7 @@ sub download_data {
 
 sub clean_text {
 	my $text = shift;
-	debug "clean_text(...)";
+	debug_level 2, "clean_text(...)";
 	my $cleaned = $text;
 
 	$cleaned =~ s/\s+(?<![\r\n])/ /gs;
@@ -627,8 +635,12 @@ sub create_index_file {
 
 sub analyze_args {
 	foreach (@_) {
-		if(m#^--debug(=\d+)?$#) {
-			$options{debug} = 1;
+		if(m#^--debug(?:=(\d+)?)$#) {
+			if(length($1)) {
+				$options{debug} = $1;
+			} else {
+				$options{debug} = 1;
+			}
 		} elsif(m#^--repair(=\d+)?$#) {
 			$options{repair} = 1;
 		} elsif(m#^--commentlimit=(\d+)?$#) {
