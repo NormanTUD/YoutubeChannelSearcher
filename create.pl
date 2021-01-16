@@ -732,9 +732,9 @@ __DATA__
 		$GLOBALS['pagenr'] = 0;
 	}
 
-	$GLOBALS['results_per_page'] = 50;
+	$GLOBALS['results_per_page'] = 20;
 	$GLOBALS['min_result'] = $GLOBALS['pagenr'] * $GLOBALS['results_per_page'];
-	$GLOBALS['max_result'] = ($GLOBALS['pagenr'] + 1) * $GLOBALS['results_per_page'];
+	$GLOBALS['max_result'] = $GLOBALS['min_result'] + $GLOBALS['results_per_page'];
 
 
 	$GLOBALS['show_next_page'] = 0;
@@ -838,8 +838,9 @@ Searching through <?php print count_number_of_results(); ?> files
 
 $GLOBALS['php_start'] = time();
 error_reporting(E_ALL);
+
 set_error_handler(function ($severity, $message, $file, $line) {
-throw new \ErrorException($message, $severity, $severity, $file, $line);
+	throw new \ErrorException($message, $severity, $severity, $file, $line);
 });
 
 ini_set('display_errors', 1);
@@ -959,8 +960,9 @@ function find_matches_in_main_text ($stichwort, $id, $i) {
 
 		$str = '';
 		$j = 0;
-		while(!feof($fn)) {
-			if($j >= $GLOBALS['min_result'] && $j <= $GLOBALS['max_result']) {
+		$continue = 1;
+		while($continue) {
+			if($GLOBALS['min_result'] <= $j && $j <= $GLOBALS['max_result']) {
 				$result = fgets($fn);
 				if(preg_match_all("/.*$stichwort.*/i", $result, $matches, PREG_SET_ORDER)) {
 					$lc_matches = array();
@@ -976,13 +978,22 @@ function find_matches_in_main_text ($stichwort, $id, $i) {
 					}
 					$this_finds[] = new searchResult($id, $lc_matches, $result, $stichwort, $i);
 					$str = $str.$result;
-					$j++;
 				}
-			} else if($j >= $GLOBALS['max_result']) {
+				$continue = !feof($fn);
+			} else if($j > $GLOBALS['max_result']) {
 				$GLOBALS['show_next_page'] = 1;
+				$continue = 0;
 				break;
+			} else {
+				#dier($GLOBALS['min_result'].", $j, ".$GLOBALS['max_result']);
+				$GLOBALS['show_next_page'] = 1;
 			}
 
+			$j++;
+		}
+
+		if($j > $GLOBALS['max_result']) {
+			$GLOBALS['show_next_page'] = 1;
 		}
 
 		fclose($fn);
@@ -1006,27 +1017,45 @@ function print_table ($finds, $is_title = 0) {
 	print "<th>Timestamp-Kommentare</th>\n";
 	print "<th>Match</th>\n";
 	print "</tr>\n";
-	$i = 1;
+	$j = (($GLOBALS['pagenr']) * $GLOBALS['results_per_page']) + 1;
+	$max_i_per_page = $GLOBALS['results_per_page'];
+	$show_max_result = ($GLOBALS['pagenr'] * $max_i_per_page) + $max_i_per_page;
+	$show_min_result = $GLOBALS['pagenr'] * $max_i_per_page; 
 	foreach ($finds as $this_find_key => $this_find) {
 		if(array_key_exists('matches', $this_find)) {
-			if(show_entry($this_find->get_youtube_id(), $is_title)) {
-				foreach ($this_find->get_matches() as $this_find_key2 => $this_find2) {
-					$string = $this_find2[0];
-					$string = link_url($string);
-					$string = mark_results($this_find->stichwort, $string);
-					print "<tr class='tr_".($i % 2)."'>\n";
-					print "<td>$i</td>\n";
-					print "<td>".$this_find->get_duration()."</td>\n";
-					print "<td>".$this_find->get_desc().", ".$this_find->get_textfile_link()."</td>\n";
-					print "<td>".$this_find->get_title()."</td>\n";
-					print "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=".$this_find->get_youtube_id()."'>".$this_find->get_youtube_id()."</a></span></td>\n";
-					print "<td><span style='font-size: 11;'>".$this_find->get_timestamp_comments()."</span></td>\n";
-					print "<td>$string</td></tr>\n";
+			if($show_min_result < $j && $j < $show_max_result) {
+				if(show_entry($this_find->get_youtube_id(), $is_title)) {
+					foreach ($this_find->get_matches() as $this_find_key2 => $this_find2) {
+						$string = $this_find2[0];
+						$string = link_url($string);
+						$string = mark_results($this_find->stichwort, $string);
+						print "<tr class='tr_".($j % 2)."'>\n";
+						print "<td>$j</td>\n";
+						print "<td>".$this_find->get_duration()."</td>\n";
+						print "<td>".$this_find->get_desc().", ".$this_find->get_textfile_link()."</td>\n";
+						print "<td>".$this_find->get_title()."</td>\n";
+						print "<td><span style='font-size: 8;'><a href='http://youtube.com/watch?v=".$this_find->get_youtube_id()."'>".$this_find->get_youtube_id()."</a></span></td>\n";
+						print "<td><span style='font-size: 11;'>".$this_find->get_timestamp_comments()."</span></td>\n";
+						print "<td>$string</td></tr>\n";
+					}
+					$j++;
 				}
-				$i++;
+			} else {
+				$GLOBALS['show_next_page'] = 1;
 			}
 		}
 	}
+
+	if($j > $show_max_result) {
+		$GLOBALS['show_next_page'] = 1;
+	}
+
+	if($GLOBALS['show_next_page']) {
+		print '<tr style="background-color: yellow"><td colspan="7">';
+		show_next_page();
+		print '</tr></td>';
+	}
+
 	print "</table>\n";
 }
 
@@ -1297,6 +1326,13 @@ foreach ($_GET as $key => $value) {
 	}
 }
 
+function show_next_page () {
+	if($GLOBALS['show_next_page'] && array_key_exists('suche1', $_GET)) {
+		print "<a href='".basename(__FILE__)."?suche1=".urlencode($_GET['suche1'])."&pagenr=".($GLOBALS['pagenr'] + 1)."'>Next page (".$GLOBALS['results_per_page']." more results, also next page for all the other categories)</a>";
+	}
+	$GLOBALS['show_next_page'] =  0;
+}
+
 if(count($suchworte)) {
 	$timeout = 0;
 	$timeouttime = 1;
@@ -1310,6 +1346,7 @@ if(count($suchworte)) {
 		$title = $finds_and_comments_and_title_and_desc_timeout[2];
 		$desc = $finds_and_comments_and_title_and_desc_timeout[3];
 		$timeout = $finds_and_comments_and_title_and_desc_timeout[4];
+
 
 		if(count($finds)) {
 			print "<a href='#text'>Text</a><br>";
@@ -1355,9 +1392,4 @@ if(count($suchworte)) {
 	}
 }
 
-if($GLOBALS['show_next_page']) {
-	if(array_key_exists('suche1', $_GET)) {
-		print "<a href='index.php?suche1=".urlencode($_GET['suche1'])."&pagenr=".($GLOBALS['pagenr'] + 1)."'>Next page (".$GLOBALS['results_per_page']." more results)</a>";
-	}
-}
 ?>
