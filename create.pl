@@ -1017,7 +1017,7 @@ function print_table ($finds, $is_title = 0) {
 	print "<th>Timestamp-Kommentare</th>\n";
 	print "<th>Match</th>\n";
 	print "</tr>\n";
-	$j = 0; #(($GLOBALS['pagenr']) * $GLOBALS['results_per_page']) + 1;
+	$j = 0;
 	$max_i_per_page = $GLOBALS['results_per_page'];
 	$show_max_result = ($GLOBALS['pagenr'] * $max_i_per_page) + $max_i_per_page;
 	$show_min_result = $GLOBALS['pagenr'] * $max_i_per_page; 
