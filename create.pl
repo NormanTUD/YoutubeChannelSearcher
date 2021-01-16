@@ -1017,7 +1017,7 @@ function print_table ($finds, $is_title = 0) {
 	print "<th>Timestamp-Kommentare</th>\n";
 	print "<th>Match</th>\n";
 	print "</tr>\n";
-	$j = (($GLOBALS['pagenr']) * $GLOBALS['results_per_page']) + 1;
+	$j = 0; #(($GLOBALS['pagenr']) * $GLOBALS['results_per_page']) + 1;
 	$max_i_per_page = $GLOBALS['results_per_page'];
 	$show_max_result = ($GLOBALS['pagenr'] * $max_i_per_page) + $max_i_per_page;
 	$show_min_result = $GLOBALS['pagenr'] * $max_i_per_page; 
@@ -1038,11 +1038,11 @@ function print_table ($finds, $is_title = 0) {
 						print "<td><span style='font-size: 11;'>".$this_find->get_timestamp_comments()."</span></td>\n";
 						print "<td>$string</td></tr>\n";
 					}
-					$j++;
 				}
 			} else {
 				$GLOBALS['show_next_page'] = 1;
 			}
+			$j++;
 		}
 	}
 
