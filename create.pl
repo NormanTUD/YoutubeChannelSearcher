@@ -214,11 +214,12 @@ sub download_comments {
 	if(-e $comments_file) {
 		mywarn "$comments_file already exists";
 	} elsif ($options{comments}) {
-		my $parameter = qq# --output "$comments_file" --youtubeid "$id" #;
+		my $parameter = qq# --output "$comments_file" --youtubeid="$id" #;
 		if ($options{commentlimit}) {
 			$parameter .= qq# --limit $options{commentlimit} #;
 		}
 		my $command = qq#cd comments; python2.7 downloader.py $parameter; cd -#;
+		die $command;
 		debug $command;
 		system($command);
 	} else {
@@ -388,7 +389,7 @@ sub download_data {
 			download_text($results_id, $dl, $id);	
 			download_description($desc_file, $id);
 			download_duration($duration_file, $id);
-			download_comments($comments_file, $id);
+			#download_comments($comments_file, $id); # Disabled because old API was disabled
 			get_timestamp_comments($comments, $id, $comments_file);
 		} else {
 			mywarn "$title does not match $options{titleregex}";
