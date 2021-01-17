@@ -994,7 +994,7 @@ function find_matches_in_main_text ($stichwort, $id, $i) {
 		$j = 0;
 		$continue = 1;
 		while($continue) {
-			if($GLOBALS['min_result'] <= $j && $j <= $GLOBALS['max_result']) {
+			if($j <= $GLOBALS['max_result']) {
 				$result = fgets($fn);
 				if(preg_match_all("/.*$stichwort.*/i", $result, $matches, PREG_SET_ORDER)) {
 					$lc_matches = array();
