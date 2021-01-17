@@ -23,7 +23,8 @@ my %options = (
 	rename => 0,
 	repair => 0,
 	commentlimit => 0,
-	titleregex => ''
+	titleregex => '',
+	update_existing => undef
 );
 
 analyze_args(@ARGV);
@@ -64,6 +65,27 @@ sub main {
 		width => 65, height => 20, listheight => 5,
 		order => [ 'whiptail', 'dialog' ] );
 
+	if($options{update_existing}) {
+		while (my $filename = <$options{update_existing}/*/index.php>) { # /
+			$filename =~ s#/{2,}#/#g;
+			my $foldername = ($filename =~ s#index\.php$##r);
+			if(-d "$foldername/desc" && -d "$foldername/results") {
+				$options{path} = $foldername;
+
+				debug "found $foldername";
+
+				my $old_index = read_file($filename);
+				if($old_index =~ m#<title>(.*?)-Suche</title>#) {
+					$options{name} = $1;
+				}
+
+				debug "Extracted name $options{name}";
+
+				create_index_file();
+			}
+		}
+		exit 0;
+	}
 
 	if(!defined $options{path}) {
 		$options{path} = $d->inputbox(
@@ -605,6 +627,7 @@ perl create.pl --path=/var/www/domian --name="Domian-Suche" --parameter=https://
 --rename												Prompt for a new search name even if one exists already
 --repair												Repairs a repository
 --random												Shuffles order of downloading randomly	
+--update_existing=/path/										Finds currently existing searches in folder "/path/" and updates them
 EOL
 
 	exit $exit_code;
@@ -618,10 +641,13 @@ sub create_index_file {
 		unlink $index;
 	}
 
+
 	my $contents = '';
+	my $data_start = tell DATA;
 	while (<DATA>) {
 		$contents .= $_;
 	}
+	seek DATA, $data_start, 0;
 
 	if($options{name}) {
 		$contents =~ s#SUCHENAME#$options{name}#g;
@@ -644,6 +670,12 @@ sub analyze_args {
 			}
 		} elsif(m#^--repair(=\d+)?$#) {
 			$options{repair} = 1;
+		} elsif(m#^--update_existing=(.*)#) {
+			if(-d $1) {
+				$options{update_existing} = $1;
+			} else {
+				die "$1 is not a folder";
+			}
 		} elsif(m#^--commentlimit=(\d+)?$#) {
 			$options{commentlimit} = $1;
 		} elsif(m#^--titleregex=(.*)$#) {
