@@ -753,6 +753,7 @@ sub uniq {
 
 __DATA__
 <?php
+	$GLOBALS['script_starttime'] = time();
 	$GLOBALS['pagenr'] = 0;
 	if(array_key_exists("pagenr", $_GET)) {
 		if(!preg_match('/^\d+$/', $_GET['pagenr'])) {
@@ -1018,10 +1019,12 @@ function find_matches_in_main_text ($stichwort, $id, $i) {
 				$continue = 0;
 				break;
 			} else {
-				#dier($GLOBALS['min_result'].", $j, ".$GLOBALS['max_result']);
 				$continue = !feof($fn);
 			}
 
+			if(!$continue) {
+				break;
+			}
 		}
 
 		fclose($fn);
@@ -1034,7 +1037,6 @@ function find_matches_in_main_text ($stichwort, $id, $i) {
 
 function print_table ($finds, $is_title = 0) {
 	$anzahl = count($finds);
-	print "Anzahl Ergebnisse: $anzahl<br />\n";
 	print "<table>\n";
 	print "<tr>\n";
 	print "<th>Nr.</th>\n";
@@ -1115,35 +1117,139 @@ function search_all_files ($files, $suchworte, $timeouttime, $timeout) {
 	$desc = array();
 	$titles = array();
 
+
 	foreach ($files as $key => $this_file) {
-		$id = $this_file;
-		$id = preg_replace('/\.txt$/', '', $id);
+		if(count($finds) < ($GLOBALS['max_result'] + 10)) {
+			$id = $this_file;
+			$id = preg_replace('/\.txt$/', '', $id);
 
-		$starttime = time();
-		$i = 0;
-		foreach ($suchworte as $key => $stichwort) {
-			$stichwort = strtolower($stichwort);
+			$starttime = time();
+			$i = 0;
+			foreach ($suchworte as $key => $stichwort) {
+				$stichwort = strtolower($stichwort);
 
-			$finds = array_merge($finds, find_matches_in_main_text($stichwort, $id, $i));
-			$i++;
-			$comment_finds = array_merge($comment_finds, find_matches_in_comments($stichwort, $id, $i));
-			$i++;
-			$titles = array_merge($titles, find_matches_in_titles($stichwort, $id, $i));
-			$i++;
-			$desc = array_merge($desc, find_matches_in_desc($stichwort, $id, $i));
-			$i++;
+				$these_finds = find_matches_in_main_text($stichwort, $id, $i);
+				$finds = array_merge($finds, $these_finds);
+				$i++;
 
-			$thistime = time();
-			if($thistime - $starttime > $timeouttime) {
-				$timeout = 1;
-				continue;
-			}
+				$thistime = time();
+				if($thistime - $starttime > $timeouttime) {
+					$timeout = 1;
+					continue;
+				}
 
-			if ($timeout) {
-				continue;
+				if ($timeout) {
+					continue;
+				}
 			}
 		}
 	}
+
+
+	foreach ($files as $key => $this_file) {
+		if(count($comment_finds) < ($GLOBALS['max_result'] + 10)) {
+			$id = $this_file;
+			$id = preg_replace('/\.txt$/', '', $id);
+
+			$starttime = time();
+			$i = 0;
+			foreach ($suchworte as $key => $stichwort) {
+				$stichwort = strtolower($stichwort);
+
+				$comment_finds = array_merge($comment_finds, find_matches_in_comments($stichwort, $id, $i));
+				$i++;
+
+				$thistime = time();
+				if($thistime - $starttime > $timeouttime) {
+					$timeout = 1;
+					continue;
+				}
+
+				if ($timeout) {
+					continue;
+				}
+			}
+		}
+	}
+
+	foreach ($files as $key => $this_file) {
+		if(count($titles) < ($GLOBALS['max_result'] + 10)) {
+			$id = $this_file;
+			$id = preg_replace('/\.txt$/', '', $id);
+
+			$starttime = time();
+			$i = 0;
+			foreach ($suchworte as $key => $stichwort) {
+				$stichwort = strtolower($stichwort);
+
+				$titles = array_merge($titles, find_matches_in_titles($stichwort, $id, $i));
+				$i++;
+
+				$thistime = time();
+				if($thistime - $starttime > $timeouttime) {
+					$timeout = 1;
+					continue;
+				}
+
+				if ($timeout) {
+					continue;
+				}
+			}
+		}
+	}
+
+	foreach ($files as $key => $this_file) {
+		if(count($desc) < ($GLOBALS['max_result'] + 10)) {
+			$id = $this_file;
+			$id = preg_replace('/\.txt$/', '', $id);
+
+			$starttime = time();
+			$i = 0;
+			foreach ($suchworte as $key => $stichwort) {
+				$stichwort = strtolower($stichwort);
+
+				$desc = array_merge($desc, find_matches_in_desc($stichwort, $id, $i));
+				$i++;
+
+				$thistime = time();
+				if($thistime - $starttime > $timeouttime) {
+					$timeout = 1;
+					continue;
+				}
+
+				if ($timeout) {
+					continue;
+				}
+			}
+		}
+	}
+
+	foreach ($files as $key => $this_file) {
+		if(count($desc) < ($GLOBALS['max_result'] + 10)) {
+			$id = $this_file;
+			$id = preg_replace('/\.txt$/', '', $id);
+
+			$starttime = time();
+			$i = 0;
+			foreach ($suchworte as $key => $stichwort) {
+				$stichwort = strtolower($stichwort);
+
+				$desc = array_merge($desc, find_matches_in_desc($stichwort, $id, $i));
+				$i++;
+
+				$thistime = time();
+				if($thistime - $starttime > $timeouttime) {
+					$timeout = 1;
+					continue;
+				}
+
+				if ($timeout) {
+					continue;
+				}
+			}
+		}
+	}
+
 	return array($finds, $comment_finds, $titles, $desc, $timeout);
 }
 
@@ -1421,4 +1527,5 @@ if(count($suchworte)) {
 	}
 }
 
+print "Time needed to search: ".(time() - $GLOBALS['script_starttime'])."<br>\n";
 ?>
