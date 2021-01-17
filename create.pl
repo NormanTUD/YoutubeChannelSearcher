@@ -1012,7 +1012,7 @@ function find_matches_in_main_text ($stichwort, $id, $i) {
 					$str = $str.$result;
 				}
 				$continue = !feof($fn);
-			} else if($j > $GLOBALS['max_result']) {
+			} else if($j >= $GLOBALS['max_result']) {
 				$GLOBALS['show_next_page'] = 1;
 				$continue = 0;
 				break;
@@ -1024,11 +1024,11 @@ function find_matches_in_main_text ($stichwort, $id, $i) {
 			$j++;
 		}
 
+		fclose($fn);
+
 		if($j > $GLOBALS['max_result']) {
 			$GLOBALS['show_next_page'] = 1;
 		}
-
-		fclose($fn);
 
 		return $this_finds;
 	} else {
