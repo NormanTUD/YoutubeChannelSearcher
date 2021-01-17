@@ -1068,14 +1068,14 @@ function print_table ($finds, $is_title = 0) {
 					}
 				}
 			} else {
-				#$GLOBALS['show_next_page'] = 1;
+				$GLOBALS['show_next_page'] = 1;
 			}
 			$j++;
 		}
 	}
 
 	if($j > $show_max_result) {
-		#$GLOBALS['show_next_page'] = 1;
+		$GLOBALS['show_next_page'] = 1;
 	}
 
 	if($GLOBALS['show_next_page']) {
