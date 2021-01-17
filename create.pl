@@ -772,7 +772,7 @@ __DATA__
 	$GLOBALS['show_next_page'] = 0;
 ?>
 <head>
-<title>SUCHENAME-Suche</title>
+<title>Domian-Suche</title>
 <style type="text/css">
 	table, th, td {
 		border: 1px solid black;
@@ -847,7 +847,7 @@ __DATA__
 		return iterator_count($fi);
 	}
 ?>
-<h1>SUCHENAME-Suche</h1>
+<h1>Domian-Suche</h1>
 
 Searching through <?php print count_number_of_results(); ?> files
 
@@ -1010,25 +1010,21 @@ function find_matches_in_main_text ($stichwort, $id, $i) {
 					}
 					$this_finds[] = new searchResult($id, $lc_matches, $result, $stichwort, $i);
 					$str = $str.$result;
+					$j++;
 				}
 				$continue = !feof($fn);
-			} else if($j >= $GLOBALS['max_result']) {
+			} else if($j > $GLOBALS['max_result']) {
 				$GLOBALS['show_next_page'] = 1;
 				$continue = 0;
 				break;
 			} else {
 				#dier($GLOBALS['min_result'].", $j, ".$GLOBALS['max_result']);
-				$GLOBALS['show_next_page'] = 1;
+				$continue = !feof($fn);
 			}
 
-			$j++;
 		}
 
 		fclose($fn);
-
-		if($j > $GLOBALS['max_result']) {
-			$GLOBALS['show_next_page'] = 1;
-		}
 
 		return $this_finds;
 	} else {
@@ -1055,7 +1051,7 @@ function print_table ($finds, $is_title = 0) {
 	$show_min_result = $GLOBALS['pagenr'] * $max_i_per_page; 
 	foreach ($finds as $this_find_key => $this_find) {
 		if(array_key_exists('matches', $this_find)) {
-			if($show_min_result < $j && $j < $show_max_result) {
+			if($show_min_result <= $j && $j <= $show_max_result) {
 				if(show_entry($this_find->get_youtube_id(), $is_title)) {
 					foreach ($this_find->get_matches() as $this_find_key2 => $this_find2) {
 						$string = $this_find2[0];
@@ -1072,14 +1068,14 @@ function print_table ($finds, $is_title = 0) {
 					}
 				}
 			} else {
-				$GLOBALS['show_next_page'] = 1;
+				#$GLOBALS['show_next_page'] = 1;
 			}
 			$j++;
 		}
 	}
 
 	if($j > $show_max_result) {
-		$GLOBALS['show_next_page'] = 1;
+		#$GLOBALS['show_next_page'] = 1;
 	}
 
 	if($GLOBALS['show_next_page']) {
@@ -1142,6 +1138,7 @@ function search_all_files ($files, $suchworte, $timeouttime, $timeout) {
 				$timeout = 1;
 				continue;
 			}
+
 			if ($timeout) {
 				continue;
 			}
