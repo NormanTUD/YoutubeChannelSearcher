@@ -773,7 +773,7 @@ __DATA__
 	$GLOBALS['show_next_page'] = 0;
 ?>
 <head>
-<title>Domian-Suche</title>
+<title>SUCHENAME-Suche</title>
 <style type="text/css">
 	table, th, td {
 		border: 1px solid black;
@@ -848,7 +848,7 @@ __DATA__
 		return iterator_count($fi);
 	}
 ?>
-<h1>Domian-Suche</h1>
+<h1>SUCHENAME-Suche</h1>
 
 Searching through <?php print count_number_of_results(); ?> files
 
