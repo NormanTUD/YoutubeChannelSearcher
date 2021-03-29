@@ -1318,7 +1318,11 @@ function seconds2human($ss) {
 	$m = sprintf("%02d", floor(($ss % 3600)/60));
 	$h = sprintf("%02d", floor(($ss % 86400)/3600));
 
-	return "$h:$m";
+	if($h) {
+		return "$h:$m:$s";
+	} else {
+		return "$m:$s";
+	}
 }
 
 class searchResult {
