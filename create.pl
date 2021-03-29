@@ -752,6 +752,8 @@ sub uniq {
 }
 
 __DATA__
+<!DOCTYPE html>
+<html lang="de">
 <?php
 	$GLOBALS['script_starttime'] = time();
 	$GLOBALS['pagenr'] = 0;
@@ -774,7 +776,7 @@ __DATA__
 ?>
 <head>
 <title>SUCHENAME-Suche</title>
-<style type="text/css">
+<style>
 	table, th, td {
 		border: 1px solid black;
 	} 
@@ -821,6 +823,14 @@ __DATA__
 		border: 1px solid #ccc;
 		border-top: none;
 	}
+
+	.button {
+		background-color: #f0f0f0;
+	}
+
+	.checkboxclass {
+		outline: 1px solid #1e5180;
+	}
 </style>
 <script>
 	function openCommentNoMarking(idname, ytid) {
@@ -842,6 +852,7 @@ __DATA__
 	}
 </script>
 </head>
+<body>
 <?php
 	function count_number_of_results () {
 		$fi = new FilesystemIterator(__DIR__.'/results/', FilesystemIterator::SKIP_DOTS);
@@ -856,12 +867,12 @@ Searching through <?php print count_number_of_results(); ?> files
 <table>
 	<tr>
 		<td>Stichwort</td><td><input name="suche1" value="<?php print array_key_exists('suche1', $_GET) ? htmlentities($_GET['suche1']) : ''; ?>" /></td>
-	<tr>
-	</tr>
-		<td>Hat Zeitkommentar?</td></td><td><input name="hastimecomment" value="1" <?php print array_key_exists('hastimecomment', $_GET) ? ' checked="CHECKED" ' : ''; ?> type="checkbox" /></td
 	</tr>
 	<tr>
-		<td></td><td><input type="submit" value="Suchen" /></td>
+		<td>Hat Zeitkommentar?</td><td><input name="hastimecomment" value="1" <?php print array_key_exists('hastimecomment', $_GET) ? ' checked="CHECKED" ' : ''; ?> type="checkbox" class="checkboxclass" /></td>
+	</tr>
+	<tr>
+		<td></td><td><input class="button" type="submit" value="Suchen" /></td>
 	</tr>
 </table>
 </form>
@@ -1529,3 +1540,5 @@ if(count($suchworte)) {
 
 print "Time needed to search: ".(time() - $GLOBALS['script_starttime'])."<br>\n";
 ?>
+</body>
+</html>
