@@ -817,6 +817,14 @@ __DATA__
 		background-color: #ccc;
 	}
 
+
+	.commentstyle {
+		font-size: 10px;
+		padding: 6px 12px;
+		border: 1px solid #ccc;
+		border-top: none;
+	}
+
 	.tabcontent {
 		font-size: 10px;
 		display: none;
@@ -832,6 +840,7 @@ __DATA__
 	.checkboxclass {
 		outline: 1px solid #1e5180;
 	}
+
 </style>
 <script>
 	function openCommentNoMarking(idname, ytid) {
@@ -923,6 +932,45 @@ function dier ($data, $enable_html = 0, $die = 1) {
 	}
 	print "</pre>\n";
 	exit();
+}
+
+function mark_time_in_timestamp_comment ($timestamp_comment, $time_in_s, $id) {
+	$splitted_by_newlines = explode("\n", $timestamp_comment);
+
+	$found = null;
+	$i = 0;
+	$earliest_time = 999999;
+	foreach ($splitted_by_newlines as $line) {
+		if(is_null($found)) {
+			if(preg_match("/<a href=.*?v=.*t=(.*)'>/", $line, $all_matches)) {
+				if($earliest_time > $all_matches[1]) {
+					$earliest_time = $all_matches[1];
+				}
+
+				if ($all_matches[1] >= $time_in_s) {
+					$found = $i;
+				}
+			}
+			$i++;
+		}
+	}
+
+	if(is_null($found)) {
+		$found = count($splitted_by_newlines);
+	}
+
+	if($earliest_time > $time_in_s) {
+		array_unshift($splitted_by_newlines, "<b><a href='https://www.youtube.com/watch?v=$id&t=$time_in_s'>".seconds2human($time_in_s)."</a> Keine Beschreibung</b><br>");
+	} else {
+		$found = $found - 1;
+	}
+
+	if(!is_null($found)) {
+		$splitted_by_newlines[$found] = "<b>".$splitted_by_newlines[$found]."</b>";
+	}
+
+	$timestamp_comment_marked = join("\n", $splitted_by_newlines);
+	return $timestamp_comment_marked;
 }
 
 function find_matches_in_comments ($stichwort, $id, $i) {
@@ -1265,6 +1313,14 @@ function search_all_files ($files, $suchworte, $timeouttime, $timeout) {
 	return array($finds, $comment_finds, $titles, $desc, $timeout);
 }
 
+function seconds2human($ss) {
+	$s = $ss % 60;
+	$m = sprintf("%02d", floor(($ss % 3600)/60));
+	$h = sprintf("%02d", floor(($ss % 86400)/3600));
+
+	return "$h:$m";
+}
+
 class searchResult {
 	public $youtube_id;
 	public $timestamp_human;
@@ -1289,6 +1345,7 @@ class searchResult {
 		$this->set_textfile();
 		$this->set_i($i);
 	}
+
 
 	function replace_seconds_timestamp_with_youtube_link ($content) {
 		$id = $this->get_youtube_id();
@@ -1356,12 +1413,12 @@ class searchResult {
 				} else {
 					$style = " style='display: none !important;' ";
 				}
-				$timestamps .= '<div '.$style.' id="'.$this->get_youtube_id().'_'.$i.'_'.$n.'" class="tabcontent_'.$this->get_youtube_id().'_'.$i.'">';
-				$timestamps .= $timestamps_array[$n];
+				$timestamps .= '<div '.$style.' id="'.$this->get_youtube_id().'_'.$i.'_'.$n.'" class="tabcontent tabcontent_'.$this->get_youtube_id().'_'.$i.'">';
+				$timestamps .= mark_time_in_timestamp_comment($timestamps_array[$n], $this->get_timestamp(), $this->get_youtube_id());
 				$timestamps .= '</div>';
 			}
 		} else if (count($timestamps_array) == 1) {
-			$timestamps = $timestamps_array[0];
+			$timestamps .= "<div class='commentstyle'>".mark_time_in_timestamp_comment($timestamps_array[0], $this->get_timestamp(), $this->get_youtube_id())."</div>";
 		}
 		return $timestamps;
 	}
