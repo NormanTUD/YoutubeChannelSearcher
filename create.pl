@@ -818,6 +818,7 @@ __DATA__
 	}
 
 	.tabcontent {
+		font-size: 10px;
 		display: none;
 		padding: 6px 12px;
 		border: 1px solid #ccc;
