@@ -70,7 +70,7 @@ sub main {
 		if($options{path}) {
 			my @ids = map { s#.*/##; s#\.txt$##; $_ } <$options{path}/results/*.txt>;
 			my $comments = "$options{path}/comments";
-			foreach my $id (@ids) {
+			foreach my $id (@ids) { ### Working===[%]     done
 				my $first_comment_file = "$comments/".$id."_0.json";
 				if(!-e $first_comment_file) {
 					my $comments_file = "$comments/".$id.".json";
