@@ -1536,7 +1536,7 @@ foreach ($_GET as $key => $value) {
 
 function show_next_page () {
 	if($GLOBALS['show_next_page'] && array_key_exists('suche1', $_GET)) {
-		print "<a href='".basename(__FILE__)."?suche1=".urlencode($_GET['suche1'])."&pagenr=".($GLOBALS['pagenr'] + 1)."'>Next page (".$GLOBALS['results_per_page']." more results, also next page for all the other categories)</a>";
+		print "<a href='".basename(__FILE__)."?suche1=".urlencode($_GET['suche1'])."&pagenr=".($GLOBALS['pagenr'] + 1)."&hastimecomment=".urlencode($_GET['hastimecomment'])."'>Next page (".$GLOBALS['results_per_page']." more results, also next page for all the other categories)</a>";
 	}
 	$GLOBALS['show_next_page'] =  0;
 }
