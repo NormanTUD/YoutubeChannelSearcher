@@ -71,6 +71,7 @@ sub main {
 			my @ids = map { s#.*/##; s#\.txt$##; $_ } <$options{path}/results/*.txt>;
 			my $comments = "$options{path}/comments";
 			foreach my $id (@ids) { ### Working===[%]     done
+				mywarn "\n"; # for smart comments
 				my $first_comment_file = "$comments/".$id."_0.json";
 				if(!-e $first_comment_file) {
 					my $comments_file = "$comments/".$id.".json";
