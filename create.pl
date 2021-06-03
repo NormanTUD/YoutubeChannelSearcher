@@ -70,6 +70,7 @@ sub main {
 		if($options{path}) {
 			my @ids = map { s#.*/##; s#\.txt$##; $_ } <$options{path}/results/*.txt>;
 			my $comments = "$options{path}/comments";
+			warn "Got ".scalar(@ids)." IDs to try\n";
 			foreach my $id (@ids) { ### Working===[%]     done
 				mywarn "\n"; # for smart comments
 				my $first_comment_file = "$comments/".$id."_0.json";
