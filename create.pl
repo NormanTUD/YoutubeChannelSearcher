@@ -411,7 +411,7 @@ sub download_data {
 			download_text($results_id, $dl, $id);	
 			download_description($desc_file, $id);
 			download_duration($duration_file, $id);
-			#download_comments($comments_file, $id); # Disabled because old API was disabled
+			download_comments($comments_file, $id);
 			get_timestamp_comments($comments, $id, $comments_file);
 		} else {
 			mywarn "$title does not match $options{titleregex}";
