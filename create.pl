@@ -25,7 +25,8 @@ my %options = (
 	commentlimit => 0,
 	titleregex => '',
 	update_existing => undef,
-	only_download_comments_for_existing_videos => 0
+	only_download_comments_for_existing_videos => 0,
+	parameter_is_playlist => 0
 );
 
 analyze_args(@ARGV);
@@ -386,7 +387,7 @@ sub download_data {
 	my @ids = ();
 
 	if($start) {
-		if($start =~ m#list#) {
+		if($start =~ m#list# || $options{parameter_is_playlist}) {
 			push @ids, dl_playlist($start);
 		} else {
 			push @ids, $start;
@@ -697,6 +698,8 @@ sub analyze_args {
 			} else {
 				die "$1 is not a folder";
 			}
+		} elsif(m#^--parameter_is_playlist$#) {
+			$options{parameter_is_playlist} = 1;
 		} elsif(m#^--only_download_comments_for_existing_videos$#) {
 			$options{only_download_comments_for_existing_videos} = 1;
 		} elsif(m#^--commentlimit=(\d+)?$#) {
