@@ -24,7 +24,8 @@ my %options = (
 	repair => 0,
 	commentlimit => 0,
 	titleregex => '',
-	update_existing => undef
+	update_existing => undef,
+	only_download_comments_for_existing_videos => 0
 );
 
 analyze_args(@ARGV);
@@ -64,6 +65,25 @@ sub main {
 	my $d = new UI::Dialog( title => 'Name of the Search', backtitle => 'Name of the search',
 		width => 65, height => 20, listheight => 5,
 		order => [ 'whiptail', 'dialog' ] );
+
+	if($options{only_download_comments_for_existing_videos}) {
+		if($options{path}) {
+			my @ids = map { s#.*/##; s#\.txt$##; $_ } <$options{path}/results/*.txt>;
+			my $comments = "$options{path}/comments";
+			foreach my $id (@ids) {
+				my $first_comment_file = "$comments/".$id."_0.json";
+				if(!-e $first_comment_file) {
+					my $comments_file = "$comments/".$id.".json";
+					unlink $comments_file if -e $comments_file;
+					download_comments($comments_file, $id);
+					get_timestamp_comments($comments, $id, $comments_file);
+				}
+			}
+		} else {
+			warn "--path must be specified for --only_download_comments_for_existing_videos\n";
+		}
+		exit 0;
+	}
 
 	if($options{update_existing}) {
 		while (my $filename = <$options{update_existing}/*/index.php>) { # /
@@ -241,7 +261,6 @@ sub download_comments {
 			$parameter .= qq# --limit $options{commentlimit} #;
 		}
 		my $command = qq#cd comments; python2.7 downloader.py $parameter; cd -#;
-		die $command;
 		debug $command;
 		system($command);
 	} else {
@@ -676,6 +695,8 @@ sub analyze_args {
 			} else {
 				die "$1 is not a folder";
 			}
+		} elsif(m#^--only_download_comments_for_existing_videos$#) {
+			$options{only_download_comments_for_existing_videos} = 1;
 		} elsif(m#^--commentlimit=(\d+)?$#) {
 			$options{commentlimit} = $1;
 		} elsif(m#^--titleregex=(.*)$#) {
