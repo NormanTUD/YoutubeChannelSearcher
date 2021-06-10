@@ -895,7 +895,7 @@ __DATA__
 		return iterator_count($fi);
 	}
 ?>
-<h1>SUCHENAME-Suche</h1>
+<h1><a href="index.php">SUCHENAME-Suche</a></h1>
 
 Searching through <?php print count_number_of_results(); ?> files
 
