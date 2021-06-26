@@ -208,7 +208,7 @@ sub get_timestamp_comments {
 	my ($comments, $id, $comments_file) = @_; 
 	debug "get_timestamp_comments($comments, $id, $comments_file)";
 	my $comments_file_parsed  = "$comments/".$id."_0.json";
-	if(!-e $comments_file_parsed && -e $comments_file && -e $comments_file) {
+	if(!-e $comments_file_parsed && -e $comments_file) {
 		my @possible_timestamps = ();
 		my @lines = split(/[\n\r]/, read_file($comments_file));
 		foreach my $line (@lines) {
@@ -216,10 +216,10 @@ sub get_timestamp_comments {
 				my $data_struct = parse_json($line);
 				if(exists $data_struct->{text}) {
 					my $text = $data_struct->{text};
-					my $cleaned_text = clean_text($text);
 
-					if($text =~ m#((\R\s*(?:\d{1,2}:)?\d{1,2}:\d{2}\b.*[a-z]{3,}.*){1,})#gim) {
+					if($text =~ m#(.*(\R\s*(?:\d{1,2}:)?\d{1,2}:\d{2}\b.*[a-z]{3,}.*){1,})#gim) {
 						my $this_text = $1;
+						die $this_text;
 						my $votes = $data_struct->{votes};
 						my $number_of_timestamps = 0;
 						while ($this_text =~ m#\R\s*(\b(?:\d{1,2}:)?\d{1,2}:\d{2}\b)#gism) {
@@ -231,6 +231,7 @@ sub get_timestamp_comments {
 					}
 				}
 			}; 
+
 			if($@) {
 				die $@;
 			}
