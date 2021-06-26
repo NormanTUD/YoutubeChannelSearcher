@@ -26,7 +26,8 @@ my %options = (
 	titleregex => '',
 	update_existing => undef,
 	only_download_comments_for_existing_videos => 0,
-	parameter_is_playlist => 0
+	parameter_is_playlist => 0,
+	reparse_comments => 0
 );
 
 analyze_args(@ARGV);
@@ -75,7 +76,7 @@ sub main {
 			foreach my $id (sort { rand() <=> rand() } @ids) { ### Working===[%]     done
 				mywarn "\n"; # for smart comments
 				my $first_comment_file = "$comments/".$id."_0.json";
-				if(!-e $first_comment_file) {
+				if(!-e $first_comment_file || !$options{reparse_comments}) {
 					my $comments_file = "$comments/".$id.".json";
 					unlink $comments_file if -e $comments_file;
 					download_comments($comments_file, $id);
@@ -165,6 +166,18 @@ sub main {
 
 	if($options{parameter}) {
 		download_data();
+	} elsif ($options{reparse_comments}) {
+		my @ids = map { s#.*/##; s#\.txt$##; $_ } <$options{path}/results/*.txt>;
+		my $comments = "$options{path}/comments";
+		foreach my $id (@ids) {
+			my $comments_file = "$comments/".$id.".json";
+			my $n = 0;
+			while (-e "$comments/".$id."_".$n.".json") {
+				unlink "$comments/".$id."_".$n.".json";
+				$n++;
+			}
+			get_timestamp_comments($comments, $id, $comments_file);
+		}
 	} elsif ($options{repair}) {
 		repair_data();
 	} else {
@@ -208,7 +221,7 @@ sub get_timestamp_comments {
 	my ($comments, $id, $comments_file) = @_; 
 	debug "get_timestamp_comments($comments, $id, $comments_file)";
 	my $comments_file_parsed  = "$comments/".$id."_0.json";
-	if(!-e $comments_file_parsed && -e $comments_file) {
+	if((!-e $comments_file_parsed || $options{reparse_comments}) && -e $comments_file) {
 		my @possible_timestamps = ();
 		my @lines = split(/[\n\r]/, read_file($comments_file));
 		foreach my $line (@lines) {
@@ -218,8 +231,7 @@ sub get_timestamp_comments {
 					my $text = $data_struct->{text};
 
 					if($text =~ m#(.*(\R\s*(?:\d{1,2}:)?\d{1,2}:\d{2}\b.*[a-z]{3,}.*){1,})#gim) {
-						my $this_text = $1;
-						die $this_text;
+						my $this_text = $text;
 						my $votes = $data_struct->{votes};
 						my $number_of_timestamps = 0;
 						while ($this_text =~ m#\R\s*(\b(?:\d{1,2}:)?\d{1,2}:\d{2}\b)#gism) {
@@ -651,6 +663,7 @@ perl create.pl --path=/var/www/domian --name="Domian-Suche" --parameter=https://
 --repair												Repairs a repository
 --random												Shuffles order of downloading randomly	
 --update_existing=/path/										Finds currently existing searches in folder "/path/" and updates them
+--reparse_comments											Reparse old comments
 EOL
 
 	exit $exit_code;
@@ -685,7 +698,7 @@ sub create_index_file {
 
 sub analyze_args {
 	foreach (@_) {
-		if(m#^--debug(?:=(\d+)?)$#) {
+		if(m#^--debug(?:=(\d+)?)?$#) {
 			if(length($1)) {
 				$options{debug} = $1;
 			} else {
@@ -701,6 +714,8 @@ sub analyze_args {
 			}
 		} elsif(m#^--parameter_is_playlist$#) {
 			$options{parameter_is_playlist} = 1;
+		} elsif(m#^--reparse_comments$#) {
+			$options{reparse_comments} = 1;
 		} elsif(m#^--only_download_comments_for_existing_videos$#) {
 			$options{only_download_comments_for_existing_videos} = 1;
 		} elsif(m#^--commentlimit=(\d+)?$#) {
