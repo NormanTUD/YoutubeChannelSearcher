@@ -1154,7 +1154,7 @@ function print_table ($finds, $is_title = 0) {
 	$show_max_result = ($GLOBALS['pagenr'] * $max_i_per_page) + $max_i_per_page;
 	$show_min_result = $GLOBALS['pagenr'] * $max_i_per_page; 
 	foreach ($finds as $this_find_key => $this_find) {
-		if(array_key_exists('matches', $this_find)) {
+		if(property_exists($this_find, 'matches')) {
 			if($show_min_result <= $j && $j <= $show_max_result) {
 				if(show_entry($this_find->get_youtube_id(), $is_title)) {
 					foreach ($this_find->get_matches() as $this_find_key2 => $this_find2) {
