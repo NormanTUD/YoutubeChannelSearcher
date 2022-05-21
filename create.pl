@@ -11,6 +11,7 @@ use Smart::Comments;
 use JSON::Parse 'parse_json';
 use File::Path;
 use UI::Dialog;
+use DBI;
 
 my %options = (
 	debug => 0,
@@ -136,7 +137,7 @@ sub main {
 	if(!defined $options{parameter}) {
 		if(!$options{repair}) {
 			$options{parameter} = $d->inputbox(
-				text => 'Enter the URL...',
+				text => 'Enter the URL or sqlite3 file path of a firefox file...',
 				entry => ''
 			);
 		}
@@ -399,7 +400,17 @@ sub download_data {
 
 	my @ids = ();
 
-	if($start) {
+	if(-e $start) {
+		my $tmpfile = "/tmp/$$".rand().".sqlite";
+		system(qq#cp -r "$start" $tmpfile#);
+		my $dbh = DBI->connect("dbi:SQLite:dbname=$tmpfile","","");
+		my $query = q#select url from moz_places where (url like "%youtube%" or url like "%youtu.be%") and url like "%watch?v=%"#;
+		my $sth = $dbh->prepare($query);
+		my $rv = $sth->execute() or die $DBI::errstr;
+		while(my @row = $sth->fetchrow_array()) {
+			push @ids, $row[0];
+		}
+	} elsif($start) {
 		if($start =~ m#list# || $options{parameter_is_playlist}) {
 			push @ids, dl_playlist($start);
 		} else {
