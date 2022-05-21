@@ -27,3 +27,6 @@ Use `/var/www/` as main dir
 
 > export YoutubeChannelSearcherDir=/var/www/
 
+You can also get a list of all the videos you've seen automatically (if you use firefox), by using this command:
+
+> perl create.pl --lang="de" --parameter="/home/user/.mozilla/firefox/3ijrlrwe.default-1464891319751/places.sqlite"
