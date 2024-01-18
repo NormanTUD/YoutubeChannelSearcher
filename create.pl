@@ -810,7 +810,7 @@ __DATA__
 <?php
 	$GLOBALS['script_starttime'] = time();
 	$GLOBALS['pagenr'] = 0;
-	if(array_key_exists("pagenr", $_GET)) {
+	if(isset($_GET["pagenr"])) {
 		if(!preg_match('/^\d+$/', $_GET['pagenr'])) {
 			$GLOBALS['pagenr'] = 0;
 		} else {
@@ -929,10 +929,10 @@ Searching through <?php print count_number_of_results(); ?> files
 <form method="get">
 <table>
 	<tr>
-		<td>Stichwort</td><td><input name="suche1" value="<?php print array_key_exists('suche1', $_GET) ? htmlentities($_GET['suche1']) : ''; ?>" /></td>
+		<td>Stichwort</td><td><input name="suche1" value="<?php print isset($_GET['suche1']) ? htmlentities($_GET['suche1']) : ''; ?>" /></td>
 	</tr>
 	<tr>
-		<td>Hat Zeitkommentar?</td><td><input name="hastimecomment" value="1" <?php print array_key_exists('hastimecomment', $_GET) ? ' checked="CHECKED" ' : ''; ?> type="checkbox" class="checkboxclass" /></td>
+		<td>Hat Zeitkommentar?</td><td><input name="hastimecomment" value="1" <?php print isset($_GET['hastimecomment']) ? ' checked="CHECKED" ' : ''; ?> type="checkbox" class="checkboxclass" /></td>
 	</tr>
 	<tr>
 		<td></td><td><input class="button" type="submit" value="Suchen" /></td>
@@ -958,11 +958,11 @@ function dier ($data, $enable_html = 0, $die = 1) {
 
 	$source = '';
 
-	if(array_key_exists(1, $debug_backtrace) && array_key_exists('file', $debug_backtrace[1])) {
+	if(isset($debug_backtrace[1]) && isset($debug_backtrace[1]['file'])) {
 		@$source .= 'Aufgerufen von <b>'.$debug_backtrace[1]['file'].'</b>::<i>';
 	}
 	
-	if(array_key_exists(1, $debug_backtrace) && array_key_exists('function', $debug_backtrace[1])) {
+	if(isset($debug_backtrace[1]) && isset($debug_backtrace[1]['function'])) {
 		@$source .= $debug_backtrace[1]['function'];
 	}
 
@@ -1206,7 +1206,7 @@ function show_entry ($id, $is_title = False) {
 	if($is_title) {
 		return True;
 	}
-	if((array_key_exists('hastimecomment', $_GET) && timestamp_file_exists($id)) || !array_key_exists('hastimecomment', $_GET)) {
+	if((isset($_GET['hastimecomment']) && timestamp_file_exists($id)) || !isset($_GET['hastimecomment'])) {
 		return True;
 	} else {
 		return False;
@@ -1588,8 +1588,8 @@ foreach ($_GET as $key => $value) {
 }
 
 function show_next_page () {
-	if($GLOBALS['show_next_page'] && array_key_exists('suche1', $_GET)) {
-		print "<a href='".basename(__FILE__)."?suche1=".urlencode($_GET['suche1'])."&pagenr=".($GLOBALS['pagenr'] + 1)."&hastimecomment=".urlencode(array_key_exists("hastimecomment", $_GET) ? $_GET['hastimecomment'] : 0)."'>Next page (".$GLOBALS['results_per_page']." more results, also next page for all the other categories)</a>";
+	if($GLOBALS['show_next_page'] && isset($_GET['suche1'])) {
+		print "<a href='".basename(__FILE__)."?suche1=".urlencode($_GET['suche1'])."&pagenr=".($GLOBALS['pagenr'] + 1)."&hastimecomment=".urlencode(isset($_GET["hastimecomment"]) ? $_GET['hastimecomment'] : 0)."'>Next page (".$GLOBALS['results_per_page']." more results, also next page for all the other categories)</a>";
 	}
 	$GLOBALS['show_next_page'] =  0;
 }
