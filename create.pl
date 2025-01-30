@@ -291,7 +291,7 @@ sub download_duration {
 	if(-e $duration_file) {
 		mywarn "$duration_file already exists";
 	} else {
-		my $command = qq#yt-dlp --no-check-certificate --get-duration -- "$id"#;
+		my $command = qq#yt-dlp --cookies-from-browser firefox --no-check-certificate --get-duration -- "$id"#;
 		debug $command;
 		my $title = qx($command);
 		open my $fh, '>', $duration_file;
@@ -306,7 +306,7 @@ sub download_description {
 	if(-e $desc_file) {
 		mywarn "$desc_file already exists";
 	} else {
-		my $command = qq#yt-dlp --no-check-certificate --get-description -- "$id"#;
+		my $command = qq#yt-dlp --cookies-from-browser firefox --no-check-certificate --get-description -- "$id"#;
 		debug $command;
 		my $title = qx($command);
 		open my $fh, '>', $desc_file;
@@ -321,7 +321,7 @@ sub download_title {
 	if(-e $title_file) {
 		mywarn "$title_file already exists";
 	} else {
-		my $command = qq#yt-dlp --no-check-certificate --get-title -- "$id"#;
+		my $command = qq#yt-dlp --cookies-from-browser firefox --no-check-certificate --get-title -- "$id"#;
 		debug $command;
 		my $title = qx($command);
 		open my $fh, '>', $title_file;
@@ -524,7 +524,7 @@ sub transcribe {
 	debug "transcribe($dl, $id)";
 
 	my $dlid = $id;
-	my $command = qq#yt-dlp --no-check-certificate --sub-lang=$options{lang} --write-auto-sub --skip-download -o "$dl/$dlid" -- "$dlid"#;
+	my $command = qq#yt-dlp --cookies-from-browser firefox --no-check-certificate --sub-lang=$options{lang} --write-auto-sub --skip-download -o "$dl/$dlid" -- "$dlid"#;
 	mysystem($command);
 
 	my $vtt_file = "$dl/$id.$options{lang}.vtt";
@@ -546,7 +546,7 @@ sub dl_playlist {
 	if(-e $hash) {
 		@list = map { chomp $_; $_; } qx(cat $hash);
 	} else {
-		my $command = qq#yt-dlp --no-check-certificate -j --flat-playlist "$start" | jq -r '.id'#;
+		my $command = qq#yt-dlp --cookies-from-browser firefox --no-check-certificate -j --flat-playlist "$start" | jq -r '.id'#;
 		debug $command;
 		@list = qx($command);
 		@list = map { chomp $_; $_ } @list;
