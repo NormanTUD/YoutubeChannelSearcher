@@ -80,7 +80,7 @@ sub main {
 				if(!-e $first_comment_file || !$options{reparse_comments}) {
 					my $comments_file = "$comments/".$id.".json";
 					unlink $comments_file if -e $comments_file;
-					download_comments($comments_file, $id);
+					#download_comments($comments_file, $id);
 					get_timestamp_comments($comments, $id, $comments_file);
 				}
 			}
